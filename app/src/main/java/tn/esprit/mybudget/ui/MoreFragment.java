@@ -77,7 +77,13 @@ public class MoreFragment extends Fragment {
             holder.tvTitle.setText(option.getTitle());
             holder.ivIcon.setImageResource(option.getIconResId());
             holder.itemView.setOnClickListener(v -> {
-                Toast.makeText(getContext(), "Clicked: " + option.getTitle(), Toast.LENGTH_SHORT).show();
+                if ("Catégories".equals(option.getTitle())) {
+                    android.content.Intent intent = new android.content.Intent(getContext(),
+                            CategoryManagementActivity.class);
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(getContext(), "Clicked: " + option.getTitle(), Toast.LENGTH_SHORT).show();
+                }
             });
         }
 

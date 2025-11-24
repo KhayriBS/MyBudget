@@ -24,6 +24,14 @@ public class ReportsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_reports);
 
+        androidx.appcompat.widget.Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setTitle("Reports");
+        }
+
         pieChart = findViewById(R.id.pieChart);
         Button btnExport = findViewById(R.id.btnExport);
 
@@ -49,5 +57,11 @@ public class ReportsActivity extends AppCompatActivity {
         pieChart.setData(data);
         pieChart.getDescription().setEnabled(false);
         pieChart.invalidate(); // Refresh
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
     }
 }
