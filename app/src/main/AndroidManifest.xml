@@ -22,6 +22,8 @@
 
         <activity android:name=".ui.RegisterActivity" />
         <activity android:name=".ui.AddTransactionActivity" />
+        <activity android:name=".ui.MainActivity" />
+        <activity android:name=".ui.ReportsActivity" />
     </application>
 
 </manifest>
