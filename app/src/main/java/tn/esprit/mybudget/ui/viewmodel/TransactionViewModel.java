@@ -50,4 +50,13 @@ public class TransactionViewModel extends AndroidViewModel {
             loadTransactions(transaction.userId);
         });
     }
+
+    public LiveData<List<Transaction>> searchTransactions(int userId, String query) {
+        MutableLiveData<List<Transaction>> searchResults = new MutableLiveData<>();
+        executorService.execute(() -> {
+            List<Transaction> results = transactionDao.searchTransactions(userId, query);
+            searchResults.postValue(results);
+        });
+        return searchResults;
+    }
 }

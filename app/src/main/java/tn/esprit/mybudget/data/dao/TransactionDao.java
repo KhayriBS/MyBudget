@@ -9,6 +9,7 @@ import androidx.room.Update;
 import java.util.List;
 
 import tn.esprit.mybudget.data.entity.Transaction;
+
 @Dao
 public interface TransactionDao {
     @Insert
@@ -28,4 +29,7 @@ public interface TransactionDao {
 
     @Query("SELECT SUM(amount) FROM transactions WHERE userId = :userId AND categoryId = :categoryId")
     double getTotalByCategory(int userId, int categoryId);
+
+    @Query("SELECT * FROM transactions WHERE userId = :userId AND (note LIKE '%' || :query || '%' OR amount LIKE '%' || :query || '%') ORDER BY date DESC")
+    List<Transaction> searchTransactions(int userId, String query);
 }

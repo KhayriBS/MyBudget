@@ -81,6 +81,44 @@ public class MoreFragment extends Fragment {
                     android.content.Intent intent = new android.content.Intent(getContext(),
                             CategoryManagementActivity.class);
                     startActivity(intent);
+                } else if ("Exporter".equals(option.getTitle())) {
+                    // For now, we need to fetch transactions.
+                    // Ideally, this should be done via ViewModel observation or a direct DB call in
+                    // background.
+                    // For simplicity in this step, we'll show a Toast that it's starting.
+                    // Real implementation requires observing LiveData from a ViewModel.
+                    Toast.makeText(getContext(), "Exporting...", Toast.LENGTH_SHORT).show();
+
+                    // Triggering export via ViewModel (need to add this logic to a ViewModel
+                    // accessible here)
+                    // Or for now, just a placeholder as we need a list of transactions.
+                    // Let's assume we have a shared ViewModel or we create one.
+                    tn.esprit.mybudget.ui.viewmodel.TransactionViewModel viewModel = new androidx.lifecycle.ViewModelProvider(
+                            MoreFragment.this).get(tn.esprit.mybudget.ui.viewmodel.TransactionViewModel.class);
+
+                    // We need to observe once.
+                    viewModel.getTransactions().observe(getViewLifecycleOwner(), transactions -> {
+                        if (transactions != null) {
+                            tn.esprit.mybudget.utils.CsvExporter.exportTransactionsToCsv(getContext(), transactions);
+                        }
+                    });
+
+                    // Trigger load if not already loaded (usually MainActivity loads it, but let's
+                    // be safe)
+                    viewModel.loadTransactions(1); // Hardcoded User ID
+
+                } else if ("Budget".equals(option.getTitle())) {
+                    android.content.Intent intent = new android.content.Intent(getContext(),
+                            BudgetActivity.class);
+                    startActivity(intent);
+                } else if ("Rechercher".equals(option.getTitle())) {
+                    android.content.Intent intent = new android.content.Intent(getContext(),
+                            SearchActivity.class);
+                    startActivity(intent);
+                } else if ("Objectifs d'épargne".equals(option.getTitle())) {
+                    android.content.Intent intent = new android.content.Intent(getContext(),
+                            SavingsGoalsActivity.class);
+                    startActivity(intent);
                 } else {
                     Toast.makeText(getContext(), "Clicked: " + option.getTitle(), Toast.LENGTH_SHORT).show();
                 }
