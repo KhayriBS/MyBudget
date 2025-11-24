@@ -29,11 +29,17 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    buildFeatures {
+        viewBinding = true
+    }
 }
 
 dependencies {
 
     implementation(libs.room.runtime)
+    implementation(libs.annotation)
+    implementation(libs.lifecycle.livedata.ktx)
+    implementation(libs.lifecycle.viewmodel.ktx)
     annotationProcessor(libs.room.compiler)
     implementation(libs.biometric)
     implementation(libs.mpchart)
