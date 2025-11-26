@@ -17,7 +17,7 @@
         android:theme="@style/Theme.MyBudget"
         tools:targetApi="31">
         <activity
-            android:name=".ui.LoginActivity"
+            android:name=".ui.auth.LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -25,14 +25,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.RegisterActivity" />
-        <activity android:name=".ui.MainActivity" />
-        <activity android:name=".ui.AddTransactionActivity" />
-        <activity android:name=".ui.ReportsActivity" />
-        <activity android:name=".ui.CategoryManagementActivity" />
-        <activity android:name=".ui.BudgetActivity" />
-        <activity android:name=".ui.SearchActivity" />
-        <activity android:name=".ui.SavingsGoalsActivity" />
+        <activity android:name=".ui.auth.RegisterActivity" />
+        <activity android:name=".ui.main.MainActivity" />
+        <activity android:name=".ui.transaction.AddTransactionActivity" />
+        <activity android:name=".ui.report.ReportsActivity" />
+        <activity android:name=".ui.category.CategoryManagementActivity" />
+        <activity android:name=".ui.budget.BudgetActivity" />
+        <activity android:name=".ui.search.SearchActivity" />
+        <activity android:name=".ui.saving.SavingsGoalsActivity" />
+        <activity android:name=".ui.recurring.RecurringTransactionActivity" />
+        <activity android:name=".ui.reminder.RemindersActivity" />
+        <activity android:name=".ui.currency.CurrencyActivity" />
+        <activity android:name=".ui.currency.CurrencySelectionActivity" />
+        <activity android:name=".ui.member.MembersActivity" />
     </application>
 
 </manifest>

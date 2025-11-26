@@ -18,7 +18,10 @@ public interface CurrencyDao {
     void insertAll(List<Currency> currencies);
 
     @Query("SELECT * FROM currencies")
-    List<Currency> getAllCurrencies();
+    androidx.lifecycle.LiveData<List<Currency>> getAllCurrencies();
+
+    @Query("SELECT * FROM currencies")
+    List<Currency> getAllCurrenciesSync();
 
     @Query("SELECT * FROM currencies WHERE code = :code LIMIT 1")
     Currency getCurrencyByCode(String code);
