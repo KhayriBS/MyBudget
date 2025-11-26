@@ -8,4 +8,8 @@
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
     <color name="primaryColor">#FF6200EE</color>
+    
+    <!-- Icon colors -->
+    <color name="icon_purple">#7E57C2</color>
+    <color name="icon_delete">#F44336</color>
 </resources>
