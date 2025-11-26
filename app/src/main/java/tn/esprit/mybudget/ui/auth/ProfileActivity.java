@@ -114,6 +114,12 @@ public class ProfileActivity extends AppCompatActivity {
         builder.setView(view);
         builder.setTitle("Change Password");
 
+        com.google.android.material.textfield.TextInputLayout tilCurrentPass = view
+                .findViewById(R.id.tilCurrentPassword);
+        com.google.android.material.textfield.TextInputLayout tilNewPass = view.findViewById(R.id.tilNewPassword);
+        com.google.android.material.textfield.TextInputLayout tilConfirmPass = view
+                .findViewById(R.id.tilConfirmPassword);
+
         TextInputEditText etCurrentPass = view.findViewById(R.id.etCurrentPassword);
         TextInputEditText etNewPass = view.findViewById(R.id.etNewPassword);
         TextInputEditText etConfirmPass = view.findViewById(R.id.etConfirmPassword);
@@ -126,6 +132,11 @@ public class ProfileActivity extends AppCompatActivity {
 
         // Override onClick to prevent closing on error
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            // Clear previous errors
+            tilCurrentPass.setError(null);
+            tilNewPass.setError(null);
+            tilConfirmPass.setError(null);
+
             String currentPass = etCurrentPass.getText().toString();
             String newPass = etNewPass.getText().toString();
             String confirmPass = etConfirmPass.getText().toString();
@@ -135,22 +146,36 @@ public class ProfileActivity extends AppCompatActivity {
                 return;
             }
 
-            if (!currentPass.equals(currentUser.passwordHash)) {
-                etCurrentPass.setError("Incorrect current password");
+            // Get current user from LiveData (not the instance variable which might be
+            // null)
+            User user = viewModel.getCurrentUser().getValue();
+
+            if (user == null) {
+                Toast.makeText(this, "User session expired. Please login again.", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(this, LoginActivity.class));
+                finishAffinity();
                 return;
             }
 
+            // Verify current password
+            if (!currentPass.equals(user.passwordHash)) {
+                tilCurrentPass.setError("Incorrect current password");
+                return;
+            }
+
+            // Verify new password match
             if (!newPass.equals(confirmPass)) {
-                etConfirmPass.setError("Passwords do not match");
+                tilConfirmPass.setError("Passwords do not match");
                 return;
             }
 
+            // Verify password strength
             if (!ValidationHelper.isValidPassword(newPass)) {
-                etNewPass.setError("Password too weak (min 6 chars)");
+                tilNewPass.setError("Password too weak (min 6 chars)");
                 return;
             }
 
-            viewModel.changePassword(currentUser, newPass);
+            viewModel.changePassword(user, newPass);
             Toast.makeText(this, "Password updated successfully", Toast.LENGTH_SHORT).show();
             dialog.dismiss();
         });

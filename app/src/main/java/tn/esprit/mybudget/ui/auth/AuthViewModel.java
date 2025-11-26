@@ -8,6 +8,7 @@ import androidx.lifecycle.MutableLiveData;
 import tn.esprit.mybudget.data.AppDatabase;
 import tn.esprit.mybudget.data.dao.UserDao;
 import tn.esprit.mybudget.data.entity.User;
+import tn.esprit.mybudget.util.SessionManager;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -15,6 +16,7 @@ import java.util.concurrent.Executors;
 public class AuthViewModel extends AndroidViewModel {
     private final UserDao userDao;
     private final ExecutorService executorService;
+    private final SessionManager sessionManager;
 
     private final MutableLiveData<User> currentUser = new MutableLiveData<>();
     private final MutableLiveData<String> error = new MutableLiveData<>();
@@ -24,6 +26,27 @@ public class AuthViewModel extends AndroidViewModel {
         AppDatabase db = AppDatabase.getDatabase(application);
         userDao = db.userDao();
         executorService = Executors.newSingleThreadExecutor();
+        sessionManager = new SessionManager(application);
+
+        // Load user from session if logged in
+        loadUserFromSession();
+    }
+
+    private void loadUserFromSession() {
+        if (sessionManager.isLoggedIn()) {
+            int userId = sessionManager.getUserId();
+            if (userId != -1) {
+                executorService.execute(() -> {
+                    User user = userDao.findById(userId);
+                    if (user != null) {
+                        currentUser.postValue(user);
+                    } else {
+                        // User not found, clear session
+                        sessionManager.clearSession();
+                    }
+                });
+            }
+        }
     }
 
     public LiveData<User> getCurrentUser() {
@@ -38,6 +61,7 @@ public class AuthViewModel extends AndroidViewModel {
         executorService.execute(() -> {
             User user = userDao.findByUsername(username);
             if (user != null && user.passwordHash.equals(password)) { // In real app, verify hash
+                sessionManager.saveUserSession(user.uid);
                 currentUser.postValue(user);
             } else {
                 error.postValue("Invalid username or password");
@@ -53,7 +77,12 @@ public class AuthViewModel extends AndroidViewModel {
             } else {
                 User newUser = new User(username, password, email); // In real app, hash password
                 userDao.insert(newUser);
-                currentUser.postValue(newUser);
+                // Reload to get the generated ID
+                User insertedUser = userDao.findByUsername(username);
+                if (insertedUser != null) {
+                    sessionManager.saveUserSession(insertedUser.uid);
+                    currentUser.postValue(insertedUser);
+                }
             }
         });
     }
@@ -75,6 +104,7 @@ public class AuthViewModel extends AndroidViewModel {
     }
 
     public void logout() {
+        sessionManager.clearSession();
         currentUser.setValue(null);
     }
 }

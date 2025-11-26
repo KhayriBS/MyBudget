@@ -12,13 +12,13 @@ import androidx.lifecycle.ViewModelProvider;
 import com.google.android.material.textfield.TextInputEditText;
 
 import tn.esprit.mybudget.R;
-
 import tn.esprit.mybudget.ui.main.MainActivity;
 import tn.esprit.mybudget.util.BiometricHelper;
 
 public class LoginActivity extends AppCompatActivity {
     private AuthViewModel viewModel;
     private TextInputEditText etUsername, etPassword;
+    private boolean isCheckingSession = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +31,25 @@ public class LoginActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.etPassword);
         Button btnLogin = findViewById(R.id.btnLogin);
         TextView tvRegister = findViewById(R.id.tvRegister);
+
+        // Check if user is already logged in from session
+        viewModel.getCurrentUser().observe(this, user -> {
+            if (user != null) {
+                if (isCheckingSession) {
+                    // Auto-login from saved session
+                    startActivity(new Intent(this, MainActivity.class));
+                    finish();
+                } else {
+                    // Manual login success
+                    Toast.makeText(this, "Welcome " + user.username, Toast.LENGTH_SHORT).show();
+                    startActivity(new Intent(this, MainActivity.class));
+                    finish();
+                }
+            } else {
+                // Not logged in, allow manual login
+                isCheckingSession = false;
+            }
+        });
 
         // Check for Biometric
         if (BiometricHelper.isBiometricAvailable(this)) {
@@ -63,20 +82,12 @@ public class LoginActivity extends AppCompatActivity {
                 Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
                 return;
             }
+            isCheckingSession = false;
             viewModel.login(username, password);
         });
 
         tvRegister.setOnClickListener(v -> {
             startActivity(new Intent(this, RegisterActivity.class));
-        });
-
-        viewModel.getCurrentUser().observe(this, user -> {
-            if (user != null) {
-                // Login success
-                Toast.makeText(this, "Welcome " + user.username, Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(this, MainActivity.class));
-                finish();
-            }
         });
 
         viewModel.getError().observe(this, error -> {
