@@ -66,6 +66,14 @@ public class AuthViewModel extends AndroidViewModel {
         });
     }
 
+    public void changePassword(User user, String newPassword) {
+        executorService.execute(() -> {
+            user.passwordHash = newPassword; // In real app, hash this
+            userDao.update(user);
+            currentUser.postValue(user);
+        });
+    }
+
     public void logout() {
         currentUser.setValue(null);
     }
