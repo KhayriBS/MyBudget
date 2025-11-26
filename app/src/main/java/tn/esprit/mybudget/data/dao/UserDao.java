@@ -16,5 +16,7 @@ public interface UserDao {
 
     @Query("SELECT * FROM users WHERE uid = :uid LIMIT 1")
     User findById(int uid);
-}
 
+    @androidx.room.Update
+    void update(User user);
+}

@@ -57,4 +57,16 @@ public class AuthViewModel extends AndroidViewModel {
             }
         });
     }
+
+    public void updateBiometricStatus(User user, boolean enabled) {
+        executorService.execute(() -> {
+            user.hasBiometricEnabled = enabled;
+            userDao.update(user);
+            currentUser.postValue(user);
+        });
+    }
+
+    public void logout() {
+        currentUser.setValue(null);
+    }
 }

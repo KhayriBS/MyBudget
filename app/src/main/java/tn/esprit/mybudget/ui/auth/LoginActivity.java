@@ -48,6 +48,11 @@ public class LoginActivity extends AppCompatActivity {
                 public void onError(String error) {
                     // Fallback to password
                 }
+
+                @Override
+                public void onCanceled() {
+                    // User canceled, do nothing
+                }
             });
         }
 

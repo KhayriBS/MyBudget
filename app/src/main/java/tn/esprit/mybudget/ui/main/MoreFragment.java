@@ -64,6 +64,7 @@ public class MoreFragment extends Fragment {
         options.add(new MoreOption("Sauvegarde", android.R.drawable.ic_menu_save));
         options.add(new MoreOption("Exporter", android.R.drawable.ic_menu_share));
         options.add(new MoreOption("Évaluer", android.R.drawable.btn_star));
+        options.add(new MoreOption("Profil", android.R.drawable.ic_menu_myplaces));
 
         MoreAdapter adapter = new MoreAdapter(options);
         rvMoreOptions.setAdapter(adapter);
@@ -122,6 +123,9 @@ public class MoreFragment extends Fragment {
                     startActivity(intent);
                 } else if ("Membres".equals(option.getTitle())) {
                     Intent intent = new Intent(getContext(), MembersActivity.class);
+                    startActivity(intent);
+                } else if ("Profil".equals(option.getTitle())) {
+                    Intent intent = new Intent(getContext(), tn.esprit.mybudget.ui.auth.ProfileActivity.class);
                     startActivity(intent);
                 } else {
                     Toast.makeText(getContext(), "Clicked: " + option.getTitle(), Toast.LENGTH_SHORT).show();

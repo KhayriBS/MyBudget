@@ -26,6 +26,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".ui.auth.RegisterActivity" />
+        <activity android:name=".ui.auth.ProfileActivity" />
         <activity android:name=".ui.main.MainActivity" />
         <activity android:name=".ui.transaction.AddTransactionActivity" />
         <activity android:name=".ui.report.ReportsActivity" />
