@@ -124,13 +124,13 @@ public abstract class AppDatabase extends RoomDatabase {
                     // Default Currencies
                     CurrencyDao currencyDao = INSTANCE.currencyDao();
                     if (currencyDao.getAllCurrenciesSync().isEmpty()) {
-                        currencyDao.insert(new Currency("USD", "$", 1.0));
+                        currencyDao.insert(new Currency("TND", "DT", 1.0));
                         currencyDao.insert(new Currency("EUR", "€", 0.92));
                         currencyDao.insert(new Currency("GBP", "£", 0.79));
                         currencyDao.insert(new Currency("JPY", "¥", 150.0));
                         currencyDao.insert(new Currency("CAD", "C$", 1.35));
                         currencyDao.insert(new Currency("AUD", "A$", 1.52));
-                        currencyDao.insert(new Currency("TND", "DT", 3.1));
+                        currencyDao.insert(new Currency("USD", "$", 3.1));
                     }
                 }
             });

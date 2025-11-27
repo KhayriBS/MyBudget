@@ -52,6 +52,31 @@ public class CurrencyActivity extends AppCompatActivity {
         fab.setOnClickListener(v -> showAddEditDialog(null));
 
         adapter.setOnItemClickListener(this::showAddEditDialog);
+
+        currencyViewModel.getStatusMessage().observe(this, message -> {
+            if (message != null) {
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(android.view.Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_currency, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(android.view.MenuItem item) {
+        if (item.getItemId() == R.id.action_update_rates) {
+            // Ask user for base currency or default to USD/EUR?
+            // For simplicity, let's use "USD" as base for now, or maybe "TND" if supported?
+            // Open Exchange Rates free tier usually only supports USD base.
+            // Let's use USD.
+            currencyViewModel.fetchExchangeRates("TND");
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void showAddEditDialog(Currency currencyToEdit) {
