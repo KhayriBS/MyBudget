@@ -28,6 +28,10 @@ public class BudgetViewModel extends AndroidViewModel {
         return allBudgets;
     }
 
+    public LiveData<List<tn.esprit.mybudget.data.model.BudgetWithCategory>> getBudgetsWithCategories() {
+        return budgetDao.getBudgetsWithCategories();
+    }
+
     public LiveData<Budget> getBudgetByCategory(int categoryId) {
         return budgetDao.getBudgetByCategory(categoryId);
     }

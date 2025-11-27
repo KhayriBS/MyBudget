@@ -56,8 +56,20 @@ public class BudgetActivity extends AppCompatActivity {
             categoryList = categories;
         });
 
-        budgetViewModel.getAllBudgets().observe(this, budgets -> {
+        budgetViewModel.getBudgetsWithCategories().observe(this, budgets -> {
             adapter.setBudgets(budgets);
+        });
+
+        adapter.setOnItemClickListener(new BudgetAdapter.OnItemClickListener() {
+            @Override
+            public void onEditClick(tn.esprit.mybudget.data.model.BudgetWithCategory budget) {
+                showEditBudgetDialog(budget);
+            }
+
+            @Override
+            public void onDeleteClick(tn.esprit.mybudget.data.model.BudgetWithCategory budget) {
+                showDeleteConfirmation(budget);
+            }
         });
 
         fabAdd.setOnClickListener(v -> showAddBudgetDialog());
@@ -113,6 +125,77 @@ public class BudgetActivity extends AppCompatActivity {
 
                     Budget budget = new Budget(1, categoryId, limit, "MONTHLY"); // Hardcoded UserID
                     budgetViewModel.insert(budget);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showEditBudgetDialog(tn.esprit.mybudget.data.model.BudgetWithCategory budgetWithCat) {
+        if (categoryList.isEmpty()) {
+            Toast.makeText(this, "No categories available", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String[] categoryNames = new String[categoryList.size()];
+        int selectedIndex = 0;
+        for (int i = 0; i < categoryList.size(); i++) {
+            categoryNames[i] = categoryList.get(i).name;
+            if (categoryList.get(i).id == budgetWithCat.categoryId) {
+                selectedIndex = i;
+            }
+        }
+
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        layout.setPadding(50, 40, 50, 10);
+
+        final android.widget.Spinner spinner = new android.widget.Spinner(this);
+        android.widget.ArrayAdapter<String> spinnerAdapter = new android.widget.ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, categoryNames);
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(spinnerAdapter);
+        spinner.setSelection(selectedIndex);
+        layout.addView(spinner);
+
+        final android.widget.EditText etLimit = new android.widget.EditText(this);
+        etLimit.setHint("Limit Amount");
+        etLimit.setText(String.valueOf(budgetWithCat.limitAmount));
+        etLimit.setInputType(
+                android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        layout.addView(etLimit);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Edit Budget Limit")
+                .setView(layout)
+                .setPositiveButton("Update", (dialog, which) -> {
+                    String limitStr = etLimit.getText().toString();
+                    if (limitStr.isEmpty())
+                        return;
+
+                    double limit = Double.parseDouble(limitStr);
+                    int categoryId = categoryList.get(spinner.getSelectedItemPosition()).id;
+
+                    // Create Budget object to update
+                    Budget budget = new Budget(1, categoryId, limit, budgetWithCat.period);
+                    budget.id = budgetWithCat.budgetId;
+                    budgetViewModel.update(budget);
+                    Toast.makeText(this, "Budget updated", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showDeleteConfirmation(tn.esprit.mybudget.data.model.BudgetWithCategory budgetWithCat) {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Budget")
+                .setMessage("Are you sure you want to delete this budget limit?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    // Create Budget object to delete
+                    Budget budget = new Budget(1, budgetWithCat.categoryId, budgetWithCat.limitAmount,
+                            budgetWithCat.period);
+                    budget.id = budgetWithCat.budgetId;
+                    budgetViewModel.delete(budget);
+                    Toast.makeText(this, "Budget deleted", Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
