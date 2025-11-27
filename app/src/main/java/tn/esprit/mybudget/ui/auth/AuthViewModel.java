@@ -127,6 +127,14 @@ public class AuthViewModel extends AndroidViewModel {
         executorService.execute(() -> {
             User user = userDao.findByEmail(email);
             if (user != null) {
+                // Sync verification status
+                FirebaseUser fUser = mAuth.getCurrentUser();
+                if (fUser != null && email.equals(fUser.getEmail()) && fUser.isEmailVerified()
+                        && !user.isEmailVerified) {
+                    user.isEmailVerified = true;
+                    userDao.update(user);
+                }
+
                 sessionManager.saveUserSession(user.uid);
                 currentUser.postValue(user);
             } else {
@@ -143,7 +151,14 @@ public class AuthViewModel extends AndroidViewModel {
             User existing = userDao.findByEmail(email);
             if (existing == null) {
                 User newUser = new User(username, "FIREBASE_AUTH", email);
-                newUser.isEmailVerified = false; // Will be verified later
+                newUser.isEmailVerified = false;
+
+                // Check if already verified
+                FirebaseUser fUser = mAuth.getCurrentUser();
+                if (fUser != null && email.equals(fUser.getEmail()) && fUser.isEmailVerified()) {
+                    newUser.isEmailVerified = true;
+                }
+
                 userDao.insert(newUser);
 
                 User insertedUser = userDao.findByEmail(email);
@@ -167,17 +182,28 @@ public class AuthViewModel extends AndroidViewModel {
         });
     }
 
-    public void changePassword(User user, String newPassword) {
-        // With Firebase, password change is different.
-        // We can use mAuth.getCurrentUser().updatePassword(newPassword)
+    public void changePassword(String currentPassword, String newPassword) {
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
-        if (firebaseUser != null) {
-            firebaseUser.updatePassword(newPassword)
+        if (firebaseUser != null && firebaseUser.getEmail() != null) {
+            // Re-authenticate first
+            com.google.firebase.auth.AuthCredential credential = com.google.firebase.auth.EmailAuthProvider
+                    .getCredential(firebaseUser.getEmail(), currentPassword);
+
+            firebaseUser.reauthenticate(credential)
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
-                            message.postValue("Password updated successfully");
+                            // Re-auth success, now update password
+                            firebaseUser.updatePassword(newPassword)
+                                    .addOnCompleteListener(updateTask -> {
+                                        if (updateTask.isSuccessful()) {
+                                            message.postValue("Password updated successfully");
+                                        } else {
+                                            error.postValue("Failed to update password: "
+                                                    + updateTask.getException().getMessage());
+                                        }
+                                    });
                         } else {
-                            error.postValue("Failed to update password: " + task.getException().getMessage());
+                            error.postValue("Incorrect current password");
                         }
                     });
         }
@@ -189,6 +215,37 @@ public class AuthViewModel extends AndroidViewModel {
             userDao.update(user);
             currentUser.postValue(user);
         });
+    }
+
+    public void checkEmailVerification() {
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser != null) {
+            firebaseUser.reload().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    if (firebaseUser.isEmailVerified()) {
+                        syncLocalUser(firebaseUser.getEmail());
+                    } else {
+                        error.postValue("Email not verified yet. Please check your inbox.");
+                    }
+                } else {
+                    error.postValue("Failed to check verification status.");
+                }
+            });
+        }
+    }
+
+    public void resendVerificationEmail() {
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        if (firebaseUser != null) {
+            firebaseUser.sendEmailVerification()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            message.postValue("Verification email sent.");
+                        } else {
+                            error.postValue("Failed to send verification email.");
+                        }
+                    });
+        }
     }
 
     public void logout() {

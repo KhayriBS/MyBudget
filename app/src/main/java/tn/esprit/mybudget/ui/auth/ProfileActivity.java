@@ -170,11 +170,6 @@ public class ProfileActivity extends AppCompatActivity {
                 return;
             }
 
-            if (!currentPass.equals(user.passwordHash)) {
-                tilCurrentPass.setError("Incorrect current password");
-                return;
-            }
-
             if (!newPass.equals(confirmPass)) {
                 tilConfirmPass.setError("Passwords do not match");
                 return;
@@ -185,9 +180,14 @@ public class ProfileActivity extends AppCompatActivity {
                 return;
             }
 
-            viewModel.changePassword(user, newPass);
-            Toast.makeText(this, "Password updated successfully", Toast.LENGTH_SHORT).show();
-            dialog.dismiss();
+            // Observe for success/error to dismiss dialog
+            viewModel.getMessage().observe(this, msg -> {
+                if (msg != null && msg.equals("Password updated successfully")) {
+                    dialog.dismiss();
+                }
+            });
+
+            viewModel.changePassword(currentPass, newPass);
         });
     }
 

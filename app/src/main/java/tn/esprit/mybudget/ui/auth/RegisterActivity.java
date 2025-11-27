@@ -80,9 +80,9 @@ public class RegisterActivity extends AppCompatActivity {
 
         viewModel.getCurrentUser().observe(this, user -> {
             if (user != null) {
-                // Register success, auto login
+                // Register success, go to verification screen
                 Toast.makeText(this, "Account created! Please verify your email.", Toast.LENGTH_LONG).show();
-                startActivity(new Intent(this, MainActivity.class));
+                startActivity(new Intent(this, VerificationActivity.class));
                 finishAffinity(); // Clear back stack
             }
         });

@@ -65,6 +65,7 @@ public class LoginActivity extends AppCompatActivity {
             });
         } else {
             hideBiometricOption();
+            isCheckingSession = false;
         }
 
         btnLogin.setOnClickListener(v -> {
