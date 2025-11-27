@@ -1,13 +1,17 @@
 package tn.esprit.mybudget.ui.auth;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
@@ -15,6 +19,10 @@ import androidx.lifecycle.ViewModelProvider;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.textfield.TextInputEditText;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 
 import tn.esprit.mybudget.R;
 import tn.esprit.mybudget.data.entity.User;
@@ -27,7 +35,9 @@ public class ProfileActivity extends AppCompatActivity {
     private TextView tvUsername, tvEmail;
     private SwitchMaterial switchBiometric;
     private Chip chipVerified;
+    private ImageView ivProfileAvatar;
     private User currentUser;
+    private ActivityResultLauncher<String> imagePickerLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,18 +54,27 @@ public class ProfileActivity extends AppCompatActivity {
 
         viewModel = new ViewModelProvider(this).get(AuthViewModel.class);
 
+        imagePickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri != null && currentUser != null) {
+                        saveProfilePicture(uri);
+                    }
+                });
+
         tvUsername = findViewById(R.id.tvProfileUsername);
         tvEmail = findViewById(R.id.tvProfileEmail);
         switchBiometric = findViewById(R.id.switchBiometric);
         chipVerified = findViewById(R.id.chipVerified);
+        ivProfileAvatar = findViewById(R.id.ivProfileAvatar);
         Button btnLogout = findViewById(R.id.btnLogout);
         TextView btnChangePassword = findViewById(R.id.btnChangePassword);
 
-        // Check if biometric is available on device
+        ivProfileAvatar.setOnClickListener(v -> showImagePickerDialog());
+
         if (!BiometricHelper.isBiometricAvailable(this)) {
             switchBiometric.setEnabled(false);
             switchBiometric.setText("Biometric login not available");
-            // Show toast explaining why
             Toast.makeText(this, BiometricHelper.getBiometricStatus(this), Toast.LENGTH_LONG).show();
         }
 
@@ -64,16 +83,14 @@ public class ProfileActivity extends AppCompatActivity {
                 currentUser = user;
                 updateUI(user);
             } else {
-                // Not logged in, go to login
                 startActivity(new Intent(this, LoginActivity.class));
                 finishAffinity();
             }
         });
 
         switchBiometric.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (currentUser != null && buttonView.isPressed()) { // Only if user pressed it
+            if (currentUser != null && buttonView.isPressed()) {
                 if (isChecked) {
-                    // Verify biometric before enabling
                     BiometricHelper.authenticate(this, new BiometricHelper.BiometricCallback() {
                         @Override
                         public void onSuccess() {
@@ -124,15 +141,13 @@ public class ProfileActivity extends AppCompatActivity {
         TextInputEditText etNewPass = view.findViewById(R.id.etNewPassword);
         TextInputEditText etConfirmPass = view.findViewById(R.id.etConfirmPassword);
 
-        builder.setPositiveButton("Change", null); // Set null initially to override onClick
+        builder.setPositiveButton("Change", null);
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
 
         AlertDialog dialog = builder.create();
         dialog.show();
 
-        // Override onClick to prevent closing on error
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            // Clear previous errors
             tilCurrentPass.setError(null);
             tilNewPass.setError(null);
             tilConfirmPass.setError(null);
@@ -146,8 +161,6 @@ public class ProfileActivity extends AppCompatActivity {
                 return;
             }
 
-            // Get current user from LiveData (not the instance variable which might be
-            // null)
             User user = viewModel.getCurrentUser().getValue();
 
             if (user == null) {
@@ -157,19 +170,16 @@ public class ProfileActivity extends AppCompatActivity {
                 return;
             }
 
-            // Verify current password
             if (!currentPass.equals(user.passwordHash)) {
                 tilCurrentPass.setError("Incorrect current password");
                 return;
             }
 
-            // Verify new password match
             if (!newPass.equals(confirmPass)) {
                 tilConfirmPass.setError("Passwords do not match");
                 return;
             }
 
-            // Verify password strength
             if (!ValidationHelper.isValidPassword(newPass)) {
                 tilNewPass.setError("Password too weak (min 6 chars)");
                 return;
@@ -186,10 +196,78 @@ public class ProfileActivity extends AppCompatActivity {
         tvEmail.setText(user.email);
         switchBiometric.setChecked(user.hasBiometricEnabled);
 
+        // Handle profile picture
+        if (user.profilePicturePath != null && !user.profilePicturePath.isEmpty()) {
+            File imageFile = new File(user.profilePicturePath);
+            if (imageFile.exists()) {
+                // Display real photo without tint
+                ivProfileAvatar.setImageURI(Uri.fromFile(imageFile));
+                ivProfileAvatar.setColorFilter(null);
+                ivProfileAvatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            } else {
+                // Fallback to default avatar with tint
+                ivProfileAvatar.setImageResource(R.drawable.ic_member_avatar);
+                ivProfileAvatar.setColorFilter(getResources().getColor(R.color.primaryColor));
+                ivProfileAvatar.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            }
+        } else {
+            // Default avatar with tint
+            ivProfileAvatar.setImageResource(R.drawable.ic_member_avatar);
+            ivProfileAvatar.setColorFilter(getResources().getColor(R.color.primaryColor));
+            ivProfileAvatar.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        }
+
         if (user.isEmailVerified) {
             chipVerified.setVisibility(View.VISIBLE);
         } else {
             chipVerified.setVisibility(View.GONE);
+        }
+    }
+
+    private void showImagePickerDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Change Profile Picture");
+        builder.setItems(new String[] { "Choose from Gallery", "Use Default Avatar" }, (dialog, which) -> {
+            if (which == 0) {
+                imagePickerLauncher.launch("image/*");
+            } else {
+                if (currentUser != null) {
+                    viewModel.updateProfilePicture(currentUser, null);
+                    Toast.makeText(this, "Using default avatar", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        builder.show();
+    }
+
+    private void saveProfilePicture(Uri imageUri) {
+        try {
+            File profileDir = new File(getFilesDir(), "profiles");
+            if (!profileDir.exists()) {
+                profileDir.mkdirs();
+            }
+
+            String fileName = "profile_" + currentUser.uid + ".jpg";
+            File imageFile = new File(profileDir, fileName);
+
+            InputStream inputStream = getContentResolver().openInputStream(imageUri);
+            FileOutputStream outputStream = new FileOutputStream(imageFile);
+
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = inputStream.read(buffer)) > 0) {
+                outputStream.write(buffer, 0, length);
+            }
+
+            outputStream.close();
+            inputStream.close();
+
+            viewModel.updateProfilePicture(currentUser, imageFile.getAbsolutePath());
+            Toast.makeText(this, "Profile picture updated", Toast.LENGTH_SHORT).show();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Failed to save profile picture", Toast.LENGTH_SHORT).show();
         }
     }
 

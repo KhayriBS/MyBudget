@@ -41,45 +41,50 @@ public class LoginActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.etPassword);
         Button btnLogin = findViewById(R.id.btnLogin);
         TextView tvRegister = findViewById(R.id.tvRegister);
+        TextView tvForgotPassword = findViewById(R.id.tvForgotPassword);
         btnBiometric = findViewById(R.id.btnBiometric);
         layoutBiometric = findViewById(R.id.layoutBiometric);
 
-        // Check if user is already logged in from session
-        viewModel.getCurrentUser().observe(this, user -> {
-            if (user != null) {
-                savedUser = user;
-
-                if (isCheckingSession) {
-                    // Check if user has biometric enabled
+        // Check if user was previously logged in
+        if (sessionManager.isLoggedIn()) {
+            viewModel.getCurrentUser().observe(this, user -> {
+                if (user != null && isCheckingSession) {
+                    savedUser = user;
                     if (user.hasBiometricEnabled && BiometricHelper.isBiometricAvailable(this)) {
-                        // Show biometric button and prompt automatically
-                        showBiometricOption();
+                        layoutBiometric.setVisibility(View.VISIBLE);
                         promptBiometricLogin(user);
                     } else {
-                        // Auto-login from saved session (no biometric)
-                        navigateToMain(user);
+                        hideBiometricOption();
+                        // Auto login if no biometric but session exists?
+                        // Usually we want them to re-enter password if no biometric,
+                        // or just go to main if session is valid.
+                        // For now, let's just pre-fill email
+                        etUsername.setText(user.email);
                     }
-                } else {
-                    // Manual login success
-                    navigateToMain(user);
                 }
-            } else {
-                // Not logged in, allow manual login
-                isCheckingSession = false;
-                savedUser = null;
-                hideBiometricOption();
-            }
-        });
+            });
+        } else {
+            hideBiometricOption();
+        }
 
         btnLogin.setOnClickListener(v -> {
-            String username = etUsername.getText().toString();
+            String email = etUsername.getText().toString();
             String password = etPassword.getText().toString();
-            if (username.isEmpty() || password.isEmpty()) {
+
+            if (email.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
                 return;
             }
-            isCheckingSession = false;
-            viewModel.login(username, password);
+
+            viewModel.login(email, password);
+        });
+
+        tvRegister.setOnClickListener(v -> {
+            startActivity(new Intent(this, RegisterActivity.class));
+        });
+
+        tvForgotPassword.setOnClickListener(v -> {
+            showForgotPasswordDialog();
         });
 
         btnBiometric.setOnClickListener(v -> {
@@ -88,8 +93,10 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        tvRegister.setOnClickListener(v -> {
-            startActivity(new Intent(this, RegisterActivity.class));
+        viewModel.getCurrentUser().observe(this, user -> {
+            if (user != null && !isCheckingSession) {
+                navigateToMain(user);
+            }
         });
 
         viewModel.getError().observe(this, error -> {
@@ -97,14 +104,38 @@ public class LoginActivity extends AppCompatActivity {
                 Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
             }
         });
+
+        viewModel.getMessage().observe(this, message -> {
+            if (message != null) {
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
-    private void showBiometricOption() {
-        layoutBiometric.setVisibility(View.VISIBLE);
+    private void showForgotPasswordDialog() {
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
+        View view = getLayoutInflater().inflate(R.layout.dialog_forgot_password, null);
+        builder.setView(view);
+
+        TextInputEditText etEmail = view.findViewById(R.id.etResetEmail);
+
+        builder.setPositiveButton("Send Reset Link", (dialog, which) -> {
+            String email = etEmail.getText().toString();
+            if (!email.isEmpty()) {
+                viewModel.forgotPassword(email);
+            } else {
+                Toast.makeText(this, "Please enter your email", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+        builder.show();
     }
 
     private void hideBiometricOption() {
-        layoutBiometric.setVisibility(View.GONE);
+        if (layoutBiometric != null) {
+            layoutBiometric.setVisibility(View.GONE);
+        }
     }
 
     private void promptBiometricLogin(User user) {

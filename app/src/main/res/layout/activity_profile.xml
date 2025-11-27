@@ -46,12 +46,30 @@
                     android:orientation="vertical"
                     android:padding="24dp">
 
-                    <ImageView
-                        android:id="@+id/ivProfileAvatar"
-                        android:layout_width="80dp"
-                        android:layout_height="80dp"
-                        android:src="@drawable/ic_member_avatar"
-                        app:tint="@color/primaryColor" />
+                    <FrameLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <ImageView
+                            android:id="@+id/ivProfileAvatar"
+                            android:layout_width="100dp"
+                            android:layout_height="100dp"
+                            android:src="@drawable/ic_member_avatar"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:scaleType="centerCrop" />
+
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_gravity="bottom|end"
+                            android:src="@android:drawable/ic_menu_camera"
+                            android:background="@android:color/white"
+                            android:padding="4dp"
+                            android:elevation="4dp"
+                            app:tint="@color/primaryColor" />
+                    </FrameLayout>
 
                     <TextView
                         android:id="@+id/tvProfileUsername"

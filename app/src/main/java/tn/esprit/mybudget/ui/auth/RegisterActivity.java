@@ -92,6 +92,12 @@ public class RegisterActivity extends AppCompatActivity {
                 Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
             }
         });
+
+        viewModel.getMessage().observe(this, message -> {
+            if (message != null) {
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
