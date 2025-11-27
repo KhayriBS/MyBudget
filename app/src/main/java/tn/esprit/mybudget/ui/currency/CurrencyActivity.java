@@ -58,6 +58,58 @@ public class CurrencyActivity extends AppCompatActivity {
                 Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
             }
         });
+
+        setupConverter();
+    }
+
+    private void setupConverter() {
+        android.widget.Spinner spinner = findViewById(R.id.spinnerCurrency);
+        android.widget.Button btnConvert = findViewById(R.id.btnConvert);
+        EditText etAmount = findViewById(R.id.etAmount);
+
+        java.util.List<String> currencyCodes = new java.util.ArrayList<>();
+        android.widget.ArrayAdapter<String> spinnerAdapter = new android.widget.ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, currencyCodes);
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(spinnerAdapter);
+
+        currencyViewModel.getAllCurrencies().observe(this, currencies -> {
+            adapter.setCurrencies(currencies);
+            currencyCodes.clear();
+            for (Currency c : currencies) {
+                currencyCodes.add(c.code);
+            }
+            spinnerAdapter.notifyDataSetChanged();
+        });
+
+        btnConvert.setOnClickListener(v -> {
+            String amountStr = etAmount.getText().toString();
+            if (TextUtils.isEmpty(amountStr)) {
+                Toast.makeText(this, "Veuillez entrer un montant", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            double amount;
+            try {
+                amount = Double.parseDouble(amountStr);
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, "Montant invalide", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String selectedCode = (String) spinner.getSelectedItem();
+            if (selectedCode != null) {
+                // Find rate for selected code
+                double sourceRate = 1.0;
+                for (Currency c : currencyViewModel.getAllCurrencies().getValue()) {
+                    if (c.code.equals(selectedCode)) {
+                        sourceRate = c.exchangeRateToBase;
+                        break;
+                    }
+                }
+                adapter.setConversion(amount, sourceRate);
+            }
+        });
     }
 
     @Override
@@ -73,7 +125,7 @@ public class CurrencyActivity extends AppCompatActivity {
             // For simplicity, let's use "USD" as base for now, or maybe "TND" if supported?
             // Open Exchange Rates free tier usually only supports USD base.
             // Let's use USD.
-            currencyViewModel.fetchExchangeRates("TND");
+            currencyViewModel.fetchExchangeRates("USD");
             return true;
         }
         return super.onOptionsItemSelected(item);

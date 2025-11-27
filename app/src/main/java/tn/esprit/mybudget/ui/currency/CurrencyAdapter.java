@@ -39,12 +39,37 @@ public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.Curren
         return new CurrencyViewHolder(view);
     }
 
+    private double baseAmount = 0;
+    private double baseRate = 0;
+    private boolean isConverting = false;
+
+    public void setConversion(double amount, double rate) {
+        this.baseAmount = amount;
+        this.baseRate = rate;
+        this.isConverting = true;
+        notifyDataSetChanged();
+    }
+
+    public void clearConversion() {
+        this.isConverting = false;
+        notifyDataSetChanged();
+    }
+
     @Override
     public void onBindViewHolder(@NonNull CurrencyViewHolder holder, int position) {
         Currency currency = currencies.get(position);
         holder.tvCode.setText(currency.code);
         holder.tvSymbol.setText(currency.symbol);
-        holder.tvRate.setText(String.valueOf(currency.exchangeRateToBase));
+        holder.tvRate.setText(String.format("%.4f", currency.exchangeRateToBase));
+
+        if (isConverting && baseRate > 0) {
+            // TargetAmount = Amount * (TargetRate / SourceRate)
+            double convertedAmount = baseAmount * (currency.exchangeRateToBase / baseRate);
+            holder.tvConvertedAmount.setVisibility(View.VISIBLE);
+            holder.tvConvertedAmount.setText(String.format("%.2f %s", convertedAmount, currency.symbol));
+        } else {
+            holder.tvConvertedAmount.setVisibility(View.GONE);
+        }
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
@@ -62,12 +87,14 @@ public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.Curren
         TextView tvCode;
         TextView tvSymbol;
         TextView tvRate;
+        TextView tvConvertedAmount;
 
         public CurrencyViewHolder(@NonNull View itemView) {
             super(itemView);
             tvCode = itemView.findViewById(R.id.tvCurrencyCode);
             tvSymbol = itemView.findViewById(R.id.tvCurrencySymbol);
             tvRate = itemView.findViewById(R.id.tvExchangeRate);
+            tvConvertedAmount = itemView.findViewById(R.id.tvConvertedAmount);
         }
     }
 }
