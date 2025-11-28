@@ -12,12 +12,16 @@ public class User {
     public String username;
     public String passwordHash;
     public String email;
+    public boolean isEmailVerified;
     public boolean hasBiometricEnabled;
+    public String profilePicturePath;
 
     public User(String username, String passwordHash, String email) {
         this.username = username;
         this.passwordHash = passwordHash;
         this.email = email;
+        this.isEmailVerified = false;
         this.hasBiometricEnabled = false;
+        this.profilePicturePath = null;
     }
 }

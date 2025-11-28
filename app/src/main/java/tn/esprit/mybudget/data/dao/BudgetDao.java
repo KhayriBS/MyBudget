@@ -27,4 +27,8 @@ public interface BudgetDao {
 
     @Query("SELECT * FROM budgets")
     LiveData<List<Budget>> getAllBudgets();
+
+    @Query("SELECT b.id as budgetId, b.categoryId, c.name as categoryName, b.limitAmount, b.period " +
+            "FROM budgets b INNER JOIN categories c ON b.categoryId = c.id")
+    LiveData<List<tn.esprit.mybudget.data.model.BudgetWithCategory>> getBudgetsWithCategories();
 }

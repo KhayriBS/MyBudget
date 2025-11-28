@@ -57,11 +57,9 @@ public class MoreFragment extends Fragment {
 
         List<MoreOption> options = new ArrayList<>();
         // Add options based on the image
-        options.add(new MoreOption("Messages", android.R.drawable.ic_dialog_email));
         options.add(new MoreOption("Objectifs d'épargne", android.R.drawable.ic_menu_my_calendar));
         options.add(new MoreOption("Récurrent", android.R.drawable.ic_menu_recent_history));
         options.add(new MoreOption("Rappels", android.R.drawable.ic_popup_reminder));
-        options.add(new MoreOption("Acheter Premium", android.R.drawable.star_on));
         options.add(new MoreOption("Devise/Taux", android.R.drawable.ic_menu_rotate));
         options.add(new MoreOption("Catégories", android.R.drawable.ic_menu_sort_by_size));
         options.add(new MoreOption("Membres", android.R.drawable.ic_menu_myplaces));
@@ -69,9 +67,8 @@ public class MoreFragment extends Fragment {
         options.add(new MoreOption("Livres", android.R.drawable.ic_menu_agenda));
         options.add(new MoreOption("Comptes", android.R.drawable.ic_lock_lock));
         options.add(new MoreOption("Rechercher", android.R.drawable.ic_menu_search));
-        options.add(new MoreOption("Sauvegarde", android.R.drawable.ic_menu_save));
         options.add(new MoreOption("Exporter", android.R.drawable.ic_menu_share));
-        options.add(new MoreOption("Évaluer", android.R.drawable.btn_star));
+        options.add(new MoreOption("Profil", android.R.drawable.ic_menu_myplaces));
         options.add(new MoreOption("Paramètres", android.R.drawable.ic_menu_preferences));
         options.add(new MoreOption("Déconnexion", android.R.drawable.ic_lock_power_off));
 
@@ -194,6 +191,9 @@ public class MoreFragment extends Fragment {
                     startActivity(intent);
                 } else if ("Membres".equals(option.getTitle())) {
                     Intent intent = new Intent(getContext(), MembersActivity.class);
+                    startActivity(intent);
+                } else if ("Profil".equals(option.getTitle())) {
+                    Intent intent = new Intent(getContext(), tn.esprit.mybudget.ui.auth.ProfileActivity.class);
                     startActivity(intent);
                 } else if ("Paramètres".equals(option.getTitle())) {
                     showSettingsDialog();

@@ -13,13 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import tn.esprit.mybudget.R;
-import tn.esprit.mybudget.data.entity.Budget;
+import tn.esprit.mybudget.data.model.BudgetWithCategory;
 
 public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetViewHolder> {
 
-    private List<Budget> budgets = new ArrayList<>();
+    private List<BudgetWithCategory> budgets = new ArrayList<>();
 
-    public void setBudgets(List<Budget> budgets) {
+    public void setBudgets(List<BudgetWithCategory> budgets) {
         this.budgets = budgets;
         notifyDataSetChanged();
     }
@@ -31,16 +31,37 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
         return new BudgetViewHolder(view);
     }
 
+    private OnItemClickListener listener;
+
+    public interface OnItemClickListener {
+        void onEditClick(BudgetWithCategory budget);
+
+        void onDeleteClick(BudgetWithCategory budget);
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
+
     @Override
     public void onBindViewHolder(@NonNull BudgetViewHolder holder, int position) {
-        Budget budget = budgets.get(position);
-        // TODO: Fetch Category Name and Spent Amount
-        holder.tvCategoryName.setText("Category " + budget.categoryId);
+        BudgetWithCategory budget = budgets.get(position);
+        holder.tvCategoryName.setText(budget.categoryName);
         holder.tvLimit.setText(String.format("Limit: %.2f", budget.limitAmount));
 
         // Placeholder for progress
         holder.progressBar.setProgress(0);
         holder.tvSpent.setText("Spent: 0.00");
+
+        holder.btnEdit.setOnClickListener(v -> {
+            if (listener != null)
+                listener.onEditClick(budget);
+        });
+
+        holder.btnDelete.setOnClickListener(v -> {
+            if (listener != null)
+                listener.onDeleteClick(budget);
+        });
     }
 
     @Override
@@ -51,6 +72,7 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
     static class BudgetViewHolder extends RecyclerView.ViewHolder {
         TextView tvCategoryName, tvSpent, tvLimit;
         ProgressBar progressBar;
+        android.widget.ImageButton btnEdit, btnDelete;
 
         public BudgetViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -58,6 +80,8 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
             tvSpent = itemView.findViewById(R.id.tvSpent);
             tvLimit = itemView.findViewById(R.id.tvLimit);
             progressBar = itemView.findViewById(R.id.progressBar);
+            btnEdit = itemView.findViewById(R.id.btnEdit);
+            btnDelete = itemView.findViewById(R.id.btnDelete);
         }
     }
 }

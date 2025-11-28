@@ -13,6 +13,7 @@ import com.google.android.material.textfield.TextInputEditText;
 
 import tn.esprit.mybudget.R;
 import tn.esprit.mybudget.ui.main.MainActivity;
+import tn.esprit.mybudget.util.ValidationHelper;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -45,10 +46,31 @@ public class RegisterActivity extends AppCompatActivity {
             String email = etEmail.getText().toString();
             String password = etPassword.getText().toString();
 
-            if (username.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+            // Validate username
+            if (!ValidationHelper.isValidUsername(username)) {
+                etUsername.setError("Username must be at least 3 characters (letters, numbers, underscore only)");
+                etUsername.requestFocus();
                 return;
             }
+
+            // Validate email
+            if (!ValidationHelper.isValidEmail(email)) {
+                etEmail.setError("Please enter a valid email address");
+                etEmail.requestFocus();
+                return;
+            }
+
+            // Validate password
+            if (!ValidationHelper.isValidPassword(password)) {
+                etPassword.setError("Password must be at least 6 characters");
+                etPassword.requestFocus();
+                return;
+            }
+
+            // Show password strength
+            String strength = ValidationHelper.getPasswordStrength(password);
+            Toast.makeText(this, "Password strength: " + strength, Toast.LENGTH_SHORT).show();
+
             viewModel.register(username, password, email);
         });
 
@@ -58,9 +80,9 @@ public class RegisterActivity extends AppCompatActivity {
 
         viewModel.getCurrentUser().observe(this, user -> {
             if (user != null) {
-                // Register success, auto login
-                Toast.makeText(this, "Account created!", Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(this, MainActivity.class));
+                // Register success, go to verification screen
+                Toast.makeText(this, "Account created! Please verify your email.", Toast.LENGTH_LONG).show();
+                startActivity(new Intent(this, VerificationActivity.class));
                 finishAffinity(); // Clear back stack
             }
         });
@@ -68,6 +90,12 @@ public class RegisterActivity extends AppCompatActivity {
         viewModel.getError().observe(this, error -> {
             if (error != null) {
                 Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        viewModel.getMessage().observe(this, message -> {
+            if (message != null) {
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
             }
         });
     }
