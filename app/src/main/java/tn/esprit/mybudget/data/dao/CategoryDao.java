@@ -1,5 +1,6 @@
 package tn.esprit.mybudget.data.dao;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
@@ -29,4 +30,8 @@ public interface CategoryDao {
 
     @Query("DELETE FROM categories")
     void deleteAll();
+
+    @Query("SELECT * FROM categories WHERE id = :id")
+    LiveData<Category> getCategoriesById(int id);
+
 }
