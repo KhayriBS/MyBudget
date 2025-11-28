@@ -1,6 +1,7 @@
 package tn.esprit.mybudget.ui.auth;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
@@ -17,6 +18,10 @@ import tn.esprit.mybudget.ui.main.MainActivity;
 import tn.esprit.mybudget.util.BiometricHelper;
 
 public class LoginActivity extends AppCompatActivity {
+    private static final String PREFS_NAME = "UserPrefs";
+    private static final String KEY_USER_ID = "userId";
+    private static final String KEY_BIOMETRIC_ENABLED = "biometricEnabled";
+
     private AuthViewModel viewModel;
     private TextInputEditText etUsername, etPassword;
 
@@ -32,10 +37,13 @@ public class LoginActivity extends AppCompatActivity {
         Button btnLogin = findViewById(R.id.btnLogin);
         TextView tvRegister = findViewById(R.id.tvRegister);
 
-        // Check for Biometric
-        if (BiometricHelper.isBiometricAvailable(this)) {
-            // In a real app, check if user has enabled it in settings
-            // For demo, we try to authenticate immediately if available
+        // Check for Biometric - only if user has previously logged in AND enabled
+        // biometric
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        int savedUserId = prefs.getInt(KEY_USER_ID, -1);
+        boolean biometricEnabled = prefs.getBoolean(KEY_BIOMETRIC_ENABLED, false);
+
+        if (savedUserId != -1 && biometricEnabled && BiometricHelper.isBiometricAvailable(this)) {
             BiometricHelper.authenticate(this, new BiometricHelper.BiometricCallback() {
                 @Override
                 public void onSuccess() {
@@ -46,7 +54,8 @@ public class LoginActivity extends AppCompatActivity {
 
                 @Override
                 public void onError(String error) {
-                    // Fallback to password
+                    // Fallback to password - user can still login manually
+                    Toast.makeText(LoginActivity.this, "Use password to login", Toast.LENGTH_SHORT).show();
                 }
             });
         }
@@ -67,7 +76,11 @@ public class LoginActivity extends AppCompatActivity {
 
         viewModel.getCurrentUser().observe(this, user -> {
             if (user != null) {
-                // Login success
+                // Login success - save user ID for biometric login next time
+                SharedPreferences.Editor editor = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit();
+                editor.putInt(KEY_USER_ID, user.uid);
+                editor.apply();
+
                 Toast.makeText(this, "Welcome " + user.username, Toast.LENGTH_SHORT).show();
                 startActivity(new Intent(this, MainActivity.class));
                 finish();

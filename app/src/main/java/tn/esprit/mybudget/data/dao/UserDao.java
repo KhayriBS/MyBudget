@@ -9,7 +9,7 @@ import tn.esprit.mybudget.data.entity.User;
 @Dao
 public interface UserDao {
     @Insert
-    void insert(User user);
+    long insert(User user);
 
     @Query("SELECT * FROM users WHERE username = :username LIMIT 1")
     User findByUsername(String username);
@@ -17,4 +17,3 @@ public interface UserDao {
     @Query("SELECT * FROM users WHERE uid = :uid LIMIT 1")
     User findById(int uid);
 }
-

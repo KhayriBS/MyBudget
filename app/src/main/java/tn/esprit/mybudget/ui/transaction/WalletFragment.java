@@ -1,6 +1,8 @@
 package tn.esprit.mybudget.ui.transaction;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,8 +22,12 @@ import tn.esprit.mybudget.ui.report.ReportsActivity;
 
 public class WalletFragment extends Fragment {
 
+    private static final String PREFS_NAME = "UserPrefs";
+    private static final String KEY_USER_ID = "userId";
+
     private TransactionViewModel viewModel;
     private TransactionAdapter adapter;
+    private int currentUserId = 1; // Default fallback
 
     @Nullable
     @Override
@@ -34,6 +40,12 @@ public class WalletFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Get the logged-in user's ID
+        if (getContext() != null) {
+            SharedPreferences prefs = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            currentUserId = prefs.getInt(KEY_USER_ID, 1);
+        }
+
         RecyclerView rvTransactions = view.findViewById(R.id.rvTransactions);
         FloatingActionButton fabAdd = view.findViewById(R.id.fabAdd);
         View btnReports = view.findViewById(R.id.btnReports);
@@ -44,8 +56,8 @@ public class WalletFragment extends Fragment {
 
         viewModel = new ViewModelProvider(this).get(TransactionViewModel.class);
 
-        // Load transactions for user 1 (Hardcoded for MVP)
-        viewModel.loadTransactions(1);
+        // Load transactions for the current user
+        viewModel.loadTransactions(currentUserId);
 
         viewModel.getTransactions().observe(getViewLifecycleOwner(), transactions -> {
             adapter.setTransactions(transactions);
@@ -65,7 +77,7 @@ public class WalletFragment extends Fragment {
         super.onResume();
         // Reload data when returning from Add Activity
         if (viewModel != null) {
-            viewModel.loadTransactions(1);
+            viewModel.loadTransactions(currentUserId);
         }
     }
 }
