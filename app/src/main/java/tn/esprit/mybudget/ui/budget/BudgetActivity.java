@@ -54,6 +54,8 @@ public class BudgetActivity extends AppCompatActivity {
         categoryViewModel.loadCategories();
         categoryViewModel.getCategories().observe(this, categories -> {
             categoryList = categories;
+            adapter.setCategories(categoryList);
+
         });
 
         budgetViewModel.getAllBudgets().observe(this, budgets -> {
@@ -61,6 +63,14 @@ public class BudgetActivity extends AppCompatActivity {
         });
 
         fabAdd.setOnClickListener(v -> showAddBudgetDialog());
+        adapter.setOnDeleteClickListener(budget -> {
+            new AlertDialog.Builder(this)
+                    .setTitle("Delete Budget")
+                    .setMessage("Are you sure you want to delete this budget ?")
+                    .setPositiveButton("Yes", (dialog, which) -> budgetViewModel.delete(budget))
+                    .setNegativeButton("No", null)
+                    .show();
+        });
     }
 
     private void showAddBudgetDialog() {

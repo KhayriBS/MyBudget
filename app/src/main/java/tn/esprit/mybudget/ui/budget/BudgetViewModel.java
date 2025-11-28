@@ -22,6 +22,7 @@ public class BudgetViewModel extends AndroidViewModel {
         AppDatabase db = AppDatabase.getDatabase(application);
         budgetDao = db.budgetDao();
         allBudgets = budgetDao.getAllBudgets();
+
     }
 
     public LiveData<List<Budget>> getAllBudgets() {
@@ -35,6 +36,7 @@ public class BudgetViewModel extends AndroidViewModel {
     public void insert(Budget budget) {
         AppDatabase.databaseWriteExecutor.execute(() -> {
             budgetDao.insert(budget);
+            getAllBudgets();
         });
     }
 
@@ -47,6 +49,7 @@ public class BudgetViewModel extends AndroidViewModel {
     public void delete(Budget budget) {
         AppDatabase.databaseWriteExecutor.execute(() -> {
             budgetDao.delete(budget);
+            getAllBudgets();
         });
     }
 }
