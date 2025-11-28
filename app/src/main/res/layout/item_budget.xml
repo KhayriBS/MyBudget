@@ -13,28 +13,31 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Category Name -->
         <TextView
             android:id="@+id/tvCategoryName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Category Name"
             android:textSize="18sp"
-            android:textStyle="bold"/>
+            android:textStyle="bold" />
 
+        <!-- Progress bar -->
         <ProgressBar
             android:id="@+id/progressBar"
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="8dp"
             android:layout_marginTop="8dp"
             android:max="100"
-            android:progress="50"/>
+            android:progress="50" />
 
+        <!-- Spent & Limit + Delete icon -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="8dp"
             android:gravity="center_vertical">
 
             <TextView
@@ -42,15 +45,24 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Spent: 50.00"
-                android:textColor="@android:color/holo_red_dark"/>
+                android:textColor="@android:color/holo_red_dark" />
 
             <TextView
                 android:id="@+id/tvLimit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Limit: 100.00"
-                android:textColor="@android:color/black"/>
+                android:textColor="@android:color/black"
+                android:layout_marginStart="8dp" />
+
+            <ImageView
+                android:id="@+id/ivDelete"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="12dp"
+                android:src="@drawable/ic_delete_modern"
+                android:padding="4dp"
+                android:contentDescription="Delete" />
         </LinearLayout>
 
     </LinearLayout>
