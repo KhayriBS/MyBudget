@@ -75,11 +75,17 @@ public class BudgetActivity extends AppCompatActivity {
         });
 
         fabAdd.setOnClickListener(v -> showAddBudgetDialog());
-        adapter.setOnDeleteClickListener(budget -> {
+        adapter.setOnDeleteClickListener(budgetWithCategory -> {
             new AlertDialog.Builder(this)
                     .setTitle("Delete Budget")
                     .setMessage("Are you sure you want to delete this budget ?")
-                    .setPositiveButton("Yes", (dialog, which) -> budgetViewModel.delete(budget))
+                    .setPositiveButton("Yes", (dialog, which) -> {
+                        // Convert BudgetWithCategory to Budget for deletion
+                        Budget budgetToDelete = new Budget(1, budgetWithCategory.categoryId,
+                                budgetWithCategory.limitAmount, budgetWithCategory.period);
+                        budgetToDelete.id = budgetWithCategory.budgetId;
+                        budgetViewModel.delete(budgetToDelete);
+                    })
                     .setNegativeButton("No", null)
                     .show();
         });

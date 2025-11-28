@@ -15,7 +15,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Nouvelle Transaction Récurrente"
+            android:text="New Recurring Transaction"
             android:textSize="20sp"
             android:textStyle="bold"
             android:textColor="@color/primary"
@@ -26,7 +26,7 @@
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Titre"
+            android:hint="Title"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_marginBottom="16dp"
             app:startIconDrawable="@drawable/ic_description"
@@ -45,7 +45,7 @@
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Montant"
+            android:hint="Amount"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_marginBottom="16dp"
             app:startIconDrawable="@drawable/ic_money"
@@ -64,7 +64,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Type de Transaction"
+            android:text="Transaction Type"
             android:textSize="14sp"
             android:textColor="@android:color/darker_gray"
             android:layout_marginBottom="8dp" />
@@ -81,7 +81,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Dépense"
+                android:text="Expense"
                 android:checked="true"
                 app:buttonTint="@color/expense_red" />
 
@@ -90,7 +90,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Revenu"
+                android:text="Income"
                 app:buttonTint="@color/income_green" />
 
         </RadioGroup>
@@ -99,7 +99,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Compte"
+            android:text="Account"
             android:textSize="14sp"
             android:textColor="@android:color/darker_gray"
             android:layout_marginBottom="8dp" />
@@ -117,7 +117,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="none"
-                android:hint="Sélectionner un compte" />
+                android:hint="Select account" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -125,7 +125,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Catégorie"
+            android:text="Category"
             android:textSize="14sp"
             android:textColor="@android:color/darker_gray"
             android:layout_marginBottom="8dp" />
@@ -143,7 +143,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="none"
-                android:hint="Sélectionner une catégorie" />
+                android:hint="Select category" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -151,7 +151,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Fréquence"
+            android:text="Frequency"
             android:textSize="14sp"
             android:textColor="@android:color/darker_gray"
             android:layout_marginBottom="8dp" />
@@ -169,7 +169,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="none"
-                android:hint="Sélectionner la fréquence" />
+                android:hint="Select frequency" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -177,7 +177,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Date de début"
+            android:text="Start Date"
             android:textSize="14sp"
             android:textColor="@android:color/darker_gray"
             android:layout_marginBottom="8dp" />
@@ -186,7 +186,7 @@
             android:id="@+id/btn_select_date"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Sélectionner la date"
+            android:text="Select Date"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             app:icon="@drawable/ic_calendar"
             app:iconGravity="start"
@@ -198,7 +198,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Heure d'exécution"
+            android:text="Execution Time"
             android:textSize="14sp"
             android:textColor="@android:color/darker_gray"
             android:layout_marginBottom="8dp" />
@@ -207,7 +207,7 @@
             android:id="@+id/btn_select_time"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Sélectionner l'heure"
+            android:text="Select Time"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             app:icon="@drawable/ic_time"
             app:iconGravity="start"
@@ -225,7 +225,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🔔 Notification de Rappel"
+            android:text="🔔 Reminder Notification"
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="@color/primary"
@@ -235,7 +235,7 @@
             android:id="@+id/switch_reminder"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Activer les notifications"
+            android:text="Enable notifications"
             android:checked="true"
             android:layout_marginBottom="12dp"
             app:thumbTint="@color/primary"
@@ -246,7 +246,7 @@
             android:id="@+id/label_reminder_before"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Me rappeler avant"
+            android:text="Remind me before"
             android:textSize="14sp"
             android:textColor="@android:color/darker_gray"
             android:layout_marginBottom="8dp" />
@@ -265,7 +265,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="none"
-                android:hint="Quand me rappeler" />
+                android:hint="When to remind me" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -281,7 +281,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Annuler"
+                android:text="Cancel"
                 style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:textColor="@android:color/darker_gray"
                 android:layout_marginEnd="8dp" />
@@ -291,7 +291,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Enregistrer"
+                android:text="Save"
                 app:backgroundTint="@color/primary"
                 android:layout_marginStart="8dp" />
 

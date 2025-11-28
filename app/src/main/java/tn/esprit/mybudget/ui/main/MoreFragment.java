@@ -30,16 +30,17 @@ import tn.esprit.mybudget.ui.currency.CurrencyActivity;
 import tn.esprit.mybudget.ui.budget.BudgetActivity;
 import tn.esprit.mybudget.ui.search.SearchActivity;
 import tn.esprit.mybudget.ui.saving.SavingsGoalsActivity;
-import tn.esprit.mybudget.ui.recurring.RecurringTransactionActivity;
 import tn.esprit.mybudget.ui.reminder.RemindersActivity;
 import tn.esprit.mybudget.ui.member.MembersActivity;
-import tn.esprit.mybudget.util.BiometricHelper;
 import tn.esprit.mybudget.util.CsvExporter;
+import tn.esprit.mybudget.util.SessionManager;
+
+import com.google.firebase.auth.FirebaseAuth;
 
 public class MoreFragment extends Fragment {
 
     private static final String PREFS_NAME = "UserPrefs";
-    private static final String KEY_BIOMETRIC_ENABLED = "biometricEnabled";
+    private SessionManager sessionManager;
 
     @Nullable
     @Override
@@ -52,59 +53,26 @@ public class MoreFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        sessionManager = new SessionManager(requireContext());
+
         RecyclerView rvMoreOptions = view.findViewById(R.id.rvMoreOptions);
         rvMoreOptions.setLayoutManager(new GridLayoutManager(getContext(), 3)); // 3 columns
 
         List<MoreOption> options = new ArrayList<>();
         // Add options based on the image
-        options.add(new MoreOption("Objectifs d'épargne", android.R.drawable.ic_menu_my_calendar));
-        options.add(new MoreOption("Récurrent", android.R.drawable.ic_menu_recent_history));
-        options.add(new MoreOption("Rappels", android.R.drawable.ic_popup_reminder));
-        options.add(new MoreOption("Devise/Taux", android.R.drawable.ic_menu_rotate));
-        options.add(new MoreOption("Catégories", android.R.drawable.ic_menu_sort_by_size));
-        options.add(new MoreOption("Membres", android.R.drawable.ic_menu_myplaces));
+        options.add(new MoreOption("Savings Goals", android.R.drawable.ic_menu_my_calendar));
+        options.add(new MoreOption("Reminders", android.R.drawable.ic_popup_reminder));
+        options.add(new MoreOption("Currency/Rates", android.R.drawable.ic_menu_rotate));
+        options.add(new MoreOption("Categories", android.R.drawable.ic_menu_sort_by_size));
+        options.add(new MoreOption("Members", android.R.drawable.ic_menu_myplaces));
         options.add(new MoreOption("Budget", android.R.drawable.ic_menu_manage));
-        options.add(new MoreOption("Livres", android.R.drawable.ic_menu_agenda));
-        options.add(new MoreOption("Comptes", android.R.drawable.ic_lock_lock));
-        options.add(new MoreOption("Rechercher", android.R.drawable.ic_menu_search));
-        options.add(new MoreOption("Exporter", android.R.drawable.ic_menu_share));
-        options.add(new MoreOption("Profil", android.R.drawable.ic_menu_myplaces));
-        options.add(new MoreOption("Paramètres", android.R.drawable.ic_menu_preferences));
-        options.add(new MoreOption("Déconnexion", android.R.drawable.ic_lock_power_off));
+        options.add(new MoreOption("Search", android.R.drawable.ic_menu_search));
+        options.add(new MoreOption("Export", android.R.drawable.ic_menu_share));
+        options.add(new MoreOption("Profile", android.R.drawable.ic_menu_myplaces));
+        options.add(new MoreOption("Logout", android.R.drawable.ic_lock_power_off));
 
         MoreAdapter adapter = new MoreAdapter(options);
         rvMoreOptions.setAdapter(adapter);
-    }
-
-    private void showSettingsDialog() {
-        if (getContext() == null)
-            return;
-
-        SharedPreferences prefs = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        boolean biometricEnabled = prefs.getBoolean(KEY_BIOMETRIC_ENABLED, false);
-
-        String[] options;
-        if (BiometricHelper.isBiometricAvailable(requireContext())) {
-            options = new String[] {
-                    biometricEnabled ? "✓ Biometric Login Enabled" : "Enable Biometric Login"
-            };
-        } else {
-            options = new String[] { "Biometric not available on this device" };
-        }
-
-        new AlertDialog.Builder(requireContext())
-                .setTitle("Settings")
-                .setItems(options, (dialog, which) -> {
-                    if (which == 0 && BiometricHelper.isBiometricAvailable(requireContext())) {
-                        // Toggle biometric
-                        boolean newValue = !biometricEnabled;
-                        prefs.edit().putBoolean(KEY_BIOMETRIC_ENABLED, newValue).apply();
-                        String message = newValue ? "Biometric login enabled" : "Biometric login disabled";
-                        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton("Close", null)
-                .show();
     }
 
     private void logout() {
@@ -115,11 +83,16 @@ public class MoreFragment extends Fragment {
                 .setTitle("Logout")
                 .setMessage("Are you sure you want to logout?")
                 .setPositiveButton("Logout", (dialog, which) -> {
-                    // Clear saved user data
+                    // Sign out from Firebase
+                    FirebaseAuth.getInstance().signOut();
+
+                    // Clear session using SessionManager
+                    sessionManager.clearSession();
+
+                    // Also clear legacy UserPrefs
                     SharedPreferences prefs = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
                     prefs.edit()
                             .remove("userId")
-                            .remove(KEY_BIOMETRIC_ENABLED)
                             .apply();
 
                     // Navigate to login
@@ -155,13 +128,13 @@ public class MoreFragment extends Fragment {
             holder.tvTitle.setText(option.getTitle());
             holder.ivIcon.setImageResource(option.getIconResId());
             holder.itemView.setOnClickListener(v -> {
-                if ("Catégories".equals(option.getTitle())) {
+                if ("Categories".equals(option.getTitle())) {
                     Intent intent = new Intent(getContext(), CategoryManagementActivity.class);
                     startActivity(intent);
-                } else if ("Devise/Taux".equals(option.getTitle())) {
+                } else if ("Currency/Rates".equals(option.getTitle())) {
                     Intent intent = new Intent(getContext(), CurrencyActivity.class);
                     startActivity(intent);
-                } else if ("Exporter".equals(option.getTitle())) {
+                } else if ("Export".equals(option.getTitle())) {
                     Toast.makeText(getContext(), "Exporting...", Toast.LENGTH_SHORT).show();
                     TransactionViewModel viewModel = new ViewModelProvider(MoreFragment.this)
                             .get(TransactionViewModel.class);
@@ -177,27 +150,22 @@ public class MoreFragment extends Fragment {
                 } else if ("Budget".equals(option.getTitle())) {
                     Intent intent = new Intent(getContext(), BudgetActivity.class);
                     startActivity(intent);
-                } else if ("Rechercher".equals(option.getTitle())) {
+                } else if ("Search".equals(option.getTitle())) {
                     Intent intent = new Intent(getContext(), SearchActivity.class);
                     startActivity(intent);
-                } else if ("Objectifs d'épargne".equals(option.getTitle())) {
+                } else if ("Savings Goals".equals(option.getTitle())) {
                     Intent intent = new Intent(getContext(), SavingsGoalsActivity.class);
                     startActivity(intent);
-                } else if ("Récurrent".equals(option.getTitle())) {
-                    Intent intent = new Intent(getContext(), RecurringTransactionActivity.class);
-                    startActivity(intent);
-                } else if ("Rappels".equals(option.getTitle())) {
+                } else if ("Reminders".equals(option.getTitle())) {
                     Intent intent = new Intent(getContext(), RemindersActivity.class);
                     startActivity(intent);
-                } else if ("Membres".equals(option.getTitle())) {
+                } else if ("Members".equals(option.getTitle())) {
                     Intent intent = new Intent(getContext(), MembersActivity.class);
                     startActivity(intent);
-                } else if ("Profil".equals(option.getTitle())) {
+                } else if ("Profile".equals(option.getTitle())) {
                     Intent intent = new Intent(getContext(), tn.esprit.mybudget.ui.auth.ProfileActivity.class);
                     startActivity(intent);
-                } else if ("Paramètres".equals(option.getTitle())) {
-                    showSettingsDialog();
-                } else if ("Déconnexion".equals(option.getTitle())) {
+                } else if ("Logout".equals(option.getTitle())) {
                     logout();
                 } else {
                     Toast.makeText(getContext(), "Clicked: " + option.getTitle(), Toast.LENGTH_SHORT).show();

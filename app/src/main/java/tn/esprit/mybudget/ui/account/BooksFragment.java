@@ -58,6 +58,12 @@ public class BooksFragment extends Fragment {
             adapter.setAccounts(accounts);
         });
 
+        // Click to edit account
+        adapter.setOnAccountClickListener(account -> showEditAccountDialog(account));
+
+        // Delete account
+        adapter.setOnAccountDeleteListener(account -> showDeleteConfirmation(account));
+
         fabAdd.setOnClickListener(v -> showAddAccountDialog());
     }
 
@@ -65,9 +71,10 @@ public class BooksFragment extends Fragment {
         View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_add_account, null);
         TextInputEditText etName = view.findViewById(R.id.etAccountName);
         TextInputEditText etBalance = view.findViewById(R.id.etInitialBalance);
-        RadioGroup rgType = view.findViewById(R.id.rgType); // Note: ID in layout is rgAccountType
+        RadioGroup rgType = view.findViewById(R.id.rgAccountType);
         RadioButton rbCash = view.findViewById(R.id.rbCash);
         RadioButton rbCard = view.findViewById(R.id.rbCard);
+        RadioButton rbSavings = view.findViewById(R.id.rbSavings);
 
         new AlertDialog.Builder(getContext())
                 .setTitle("Add Account")
@@ -89,11 +96,78 @@ public class BooksFragment extends Fragment {
                     String type = "CASH";
                     if (rbCard.isChecked())
                         type = "CARD";
-                    else if (!rbCash.isChecked())
-                        type = "SAVINGS"; // Assuming 3rd option
+                    else if (rbSavings.isChecked())
+                        type = "SAVINGS";
 
                     Account account = new Account(name, type, balance, "TND");
                     viewModel.insert(account);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showEditAccountDialog(Account account) {
+        View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_add_account, null);
+        TextInputEditText etName = view.findViewById(R.id.etAccountName);
+        TextInputEditText etBalance = view.findViewById(R.id.etInitialBalance);
+        RadioGroup rgType = view.findViewById(R.id.rgAccountType);
+        RadioButton rbCash = view.findViewById(R.id.rbCash);
+        RadioButton rbCard = view.findViewById(R.id.rbCard);
+        RadioButton rbSavings = view.findViewById(R.id.rbSavings);
+
+        // Pre-fill with existing data
+        etName.setText(account.name);
+        etBalance.setText(String.valueOf(account.balance));
+
+        if ("CARD".equals(account.type)) {
+            rbCard.setChecked(true);
+        } else if ("SAVINGS".equals(account.type)) {
+            rbSavings.setChecked(true);
+        } else {
+            rbCash.setChecked(true);
+        }
+
+        new AlertDialog.Builder(getContext())
+                .setTitle("Edit Account")
+                .setView(view)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    String name = etName.getText().toString();
+                    String balanceStr = etBalance.getText().toString();
+
+                    if (name.isEmpty()) {
+                        Toast.makeText(getContext(), "Name required", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    double balance = 0;
+                    if (!balanceStr.isEmpty()) {
+                        balance = Double.parseDouble(balanceStr);
+                    }
+
+                    String type = "CASH";
+                    if (rbCard.isChecked())
+                        type = "CARD";
+                    else if (rbSavings.isChecked())
+                        type = "SAVINGS";
+
+                    account.name = name;
+                    account.balance = balance;
+                    account.type = type;
+                    viewModel.update(account);
+                    Toast.makeText(getContext(), "Account updated", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showDeleteConfirmation(Account account) {
+        new AlertDialog.Builder(getContext())
+                .setTitle("Delete Account")
+                .setMessage("Are you sure you want to delete \"" + account.name
+                        + "\"? All transactions associated with this account will also be deleted.")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    viewModel.delete(account);
+                    Toast.makeText(getContext(), "Account deleted", Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton("Cancel", null)
                 .show();

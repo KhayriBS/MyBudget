@@ -133,7 +133,7 @@ public class CurrencyActivity extends AppCompatActivity {
 
     private void showAddEditDialog(Currency currencyToEdit) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(currencyToEdit == null ? "Ajouter une devise" : "Modifier la devise");
+        builder.setTitle(currencyToEdit == null ? "Add Currency" : "Edit Currency");
 
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_add_currency, null);
         builder.setView(view);
@@ -150,13 +150,13 @@ public class CurrencyActivity extends AppCompatActivity {
                                       // disable for safety as it might be used as ID elsewhere.
         }
 
-        builder.setPositiveButton("Enregistrer", (dialog, which) -> {
+        builder.setPositiveButton("Save", (dialog, which) -> {
             String code = etCode.getText().toString().trim();
             String symbol = etSymbol.getText().toString().trim();
             String rateStr = etRate.getText().toString().trim();
 
             if (TextUtils.isEmpty(code) || TextUtils.isEmpty(symbol) || TextUtils.isEmpty(rateStr)) {
-                Toast.makeText(this, "Veuillez remplir tous les champs", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -164,7 +164,7 @@ public class CurrencyActivity extends AppCompatActivity {
             try {
                 rate = Double.parseDouble(rateStr);
             } catch (NumberFormatException e) {
-                Toast.makeText(this, "Taux invalide", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Invalid rate", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -178,7 +178,7 @@ public class CurrencyActivity extends AppCompatActivity {
             }
         });
 
-        builder.setNegativeButton("Annuler", (dialog, which) -> dialog.dismiss());
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
 
         builder.create().show();
     }

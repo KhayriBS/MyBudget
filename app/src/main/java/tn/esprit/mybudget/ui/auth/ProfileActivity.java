@@ -27,6 +27,7 @@ import java.io.InputStream;
 import tn.esprit.mybudget.R;
 import tn.esprit.mybudget.data.entity.User;
 import tn.esprit.mybudget.util.BiometricHelper;
+import tn.esprit.mybudget.util.SessionManager;
 import tn.esprit.mybudget.util.ValidationHelper;
 
 public class ProfileActivity extends AppCompatActivity {
@@ -38,6 +39,7 @@ public class ProfileActivity extends AppCompatActivity {
     private ImageView ivProfileAvatar;
     private User currentUser;
     private ActivityResultLauncher<String> imagePickerLauncher;
+    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +90,8 @@ public class ProfileActivity extends AppCompatActivity {
             }
         });
 
+        sessionManager = new SessionManager(this);
+
         switchBiometric.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (currentUser != null && buttonView.isPressed()) {
                 if (isChecked) {
@@ -95,6 +99,8 @@ public class ProfileActivity extends AppCompatActivity {
                         @Override
                         public void onSuccess() {
                             viewModel.updateBiometricStatus(currentUser, true);
+                            // Save this user as the last biometric user for quick login
+                            sessionManager.saveLastBiometricUserId(currentUser.uid);
                             Toast.makeText(ProfileActivity.this, "Biometric login enabled", Toast.LENGTH_SHORT).show();
                         }
 
@@ -112,6 +118,8 @@ public class ProfileActivity extends AppCompatActivity {
                     });
                 } else {
                     viewModel.updateBiometricStatus(currentUser, false);
+                    // Clear the biometric user ID when disabled
+                    sessionManager.clearLastBiometricUserId();
                 }
             }
         });

@@ -7,6 +7,7 @@ public class SessionManager {
     private static final String PREF_NAME = "MyBudgetSession";
     private static final String KEY_USER_ID = "user_id";
     private static final String KEY_IS_LOGGED_IN = "is_logged_in";
+    private static final String KEY_LAST_BIOMETRIC_USER_ID = "last_biometric_user_id";
 
     private final SharedPreferences prefs;
     private final SharedPreferences.Editor editor;
@@ -30,8 +31,27 @@ public class SessionManager {
         return prefs.getBoolean(KEY_IS_LOGGED_IN, false);
     }
 
+    public void saveLastBiometricUserId(int userId) {
+        editor.putInt(KEY_LAST_BIOMETRIC_USER_ID, userId);
+        editor.apply();
+    }
+
+    public int getLastBiometricUserId() {
+        return prefs.getInt(KEY_LAST_BIOMETRIC_USER_ID, -1);
+    }
+
+    public void clearLastBiometricUserId() {
+        editor.remove(KEY_LAST_BIOMETRIC_USER_ID);
+        editor.apply();
+    }
+
     public void clearSession() {
+        // Keep the last biometric user ID when clearing session
+        int lastBiometricUserId = getLastBiometricUserId();
         editor.clear();
+        if (lastBiometricUserId != -1) {
+            editor.putInt(KEY_LAST_BIOMETRIC_USER_ID, lastBiometricUserId);
+        }
         editor.apply();
     }
 }

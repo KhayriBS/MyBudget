@@ -59,11 +59,18 @@ public class AuthViewModel extends AndroidViewModel {
                     }
                 });
             }
-        } else if (mAuth.getCurrentUser() != null) {
-            // Firebase is logged in but local session might be expired or not set
-            // Sync local user
-            syncLocalUser(mAuth.getCurrentUser().getEmail());
         }
+        // Don't auto-sync from Firebase - let the user login manually
+        // This prevents auto-login after logout
+    }
+
+    public void loadUserById(int userId) {
+        executorService.execute(() -> {
+            User user = userDao.findById(userId);
+            if (user != null) {
+                currentUser.postValue(user);
+            }
+        });
     }
 
     public LiveData<User> getCurrentUser() {

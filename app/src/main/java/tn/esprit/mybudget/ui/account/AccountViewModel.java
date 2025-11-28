@@ -34,6 +34,12 @@ public class AccountViewModel extends AndroidViewModel {
         });
     }
 
+    public void update(Account account) {
+        AppDatabase.databaseWriteExecutor.execute(() -> {
+            accountDao.update(account);
+        });
+    }
+
     public void delete(Account account) {
         AppDatabase.databaseWriteExecutor.execute(() -> {
             accountDao.delete(account);

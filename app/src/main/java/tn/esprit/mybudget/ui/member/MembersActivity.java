@@ -31,7 +31,7 @@ public class MembersActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Membres");
+            getSupportActionBar().setTitle("Members");
         }
 
         RecyclerView recyclerView = findViewById(R.id.rvCategories); // Reusing ID

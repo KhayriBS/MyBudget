@@ -30,7 +30,8 @@ public class LoginActivity extends AppCompatActivity {
     private TextInputEditText etUsername, etPassword;
     private ImageButton btnBiometric;
     private LinearLayout layoutBiometric;
-    private boolean isCheckingSession = true;
+    private boolean isManualLogin = false;
+    private boolean biometricLoginInProgress = false;
     private SessionManager sessionManager;
     private User savedUser = null;
 
@@ -50,28 +51,39 @@ public class LoginActivity extends AppCompatActivity {
         btnBiometric = findViewById(R.id.btnBiometric);
         layoutBiometric = findViewById(R.id.layoutBiometric);
 
-        // Check if user was previously logged in
-        if (sessionManager.isLoggedIn()) {
-            viewModel.getCurrentUser().observe(this, user -> {
-                if (user != null && isCheckingSession) {
-                    savedUser = user;
-                    if (user.hasBiometricEnabled && BiometricHelper.isBiometricAvailable(this)) {
-                        layoutBiometric.setVisibility(View.VISIBLE);
-                        promptBiometricLogin(user);
-                    } else {
-                        hideBiometricOption();
-                        // Auto login if no biometric but session exists?
-                        // Usually we want them to re-enter password if no biometric,
-                        // or just go to main if session is valid.
-                        // For now, let's just pre-fill email
-                        etUsername.setText(user.email);
-                    }
-                }
-            });
-        } else {
-            hideBiometricOption();
-            isCheckingSession = false;
+        // Initially hide biometric
+        hideBiometricOption();
+
+        // Check for returning biometric user (user who previously enabled biometric)
+        int lastBiometricUserId = sessionManager.getLastBiometricUserId();
+        if (lastBiometricUserId != -1 && BiometricHelper.isBiometricAvailable(this)) {
+            // Load user to check if they still have biometric enabled
+            viewModel.loadUserById(lastBiometricUserId);
         }
+
+        // Single observer for user changes
+        viewModel.getCurrentUser().observe(this, user -> {
+            if (user == null)
+                return;
+
+            // If this is from manual login, navigate to main
+            if (isManualLogin) {
+                navigateToMain(user);
+                return;
+            }
+
+            // If biometric login succeeded, navigate to main
+            if (biometricLoginInProgress) {
+                return; // Let the biometric callback handle navigation
+            }
+
+            // Check if this user has biometric enabled (for showing fingerprint option)
+            if (user.hasBiometricEnabled && BiometricHelper.isBiometricAvailable(this)) {
+                savedUser = user;
+                layoutBiometric.setVisibility(View.VISIBLE);
+                etUsername.setText(user.email);
+            }
+        });
 
         btnLogin.setOnClickListener(v -> {
             String email = etUsername.getText().toString();
@@ -82,16 +94,13 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
 
+            isManualLogin = true;
             viewModel.login(email, password);
         });
 
-        tvRegister.setOnClickListener(v -> {
-            startActivity(new Intent(this, RegisterActivity.class));
-        });
+        tvRegister.setOnClickListener(v -> startActivity(new Intent(this, RegisterActivity.class)));
 
-        tvForgotPassword.setOnClickListener(v -> {
-            showForgotPasswordDialog();
-        });
+        tvForgotPassword.setOnClickListener(v -> showForgotPasswordDialog());
 
         btnBiometric.setOnClickListener(v -> {
             if (savedUser != null) {
@@ -99,14 +108,9 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        viewModel.getCurrentUser().observe(this, user -> {
-            if (user != null && !isCheckingSession) {
-                navigateToMain(user);
-            }
-        });
-
         viewModel.getError().observe(this, error -> {
             if (error != null) {
+                isManualLogin = false;
                 Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
             }
         });
@@ -145,27 +149,29 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void promptBiometricLogin(User user) {
+        biometricLoginInProgress = true;
         BiometricHelper.authenticate(this, new BiometricHelper.BiometricCallback() {
             @Override
             public void onSuccess() {
+                biometricLoginInProgress = false;
                 Toast.makeText(LoginActivity.this, "Biometric Login Success", Toast.LENGTH_SHORT).show();
+                // Re-login the user session
+                sessionManager.saveUserSession(user.uid);
                 navigateToMain(user);
             }
 
             @Override
             public void onError(String error) {
-                // Biometric failed, user can try again or login manually
+                biometricLoginInProgress = false;
                 Toast.makeText(LoginActivity.this, "Biometric authentication failed: " + error, Toast.LENGTH_SHORT)
                         .show();
-                isCheckingSession = false;
             }
 
             @Override
             public void onCanceled() {
-                // User canceled biometric, allow manual login
+                biometricLoginInProgress = false;
                 Toast.makeText(LoginActivity.this, "Biometric canceled. Please login manually.", Toast.LENGTH_SHORT)
                         .show();
-                isCheckingSession = false;
             }
         });
     }

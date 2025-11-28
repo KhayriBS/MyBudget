@@ -113,13 +113,21 @@ public class AddTransactionActivity extends AppCompatActivity {
             }
 
             int selectedAccPos = spinnerAccount.getSelectedItemPosition();
+            tn.esprit.mybudget.data.entity.Account selectedAccount = null;
             if (selectedAccPos >= 0 && selectedAccPos < accountList.size()) {
-                selectedAccountId = accountList.get(selectedAccPos).id;
+                selectedAccount = accountList.get(selectedAccPos);
+                selectedAccountId = selectedAccount.id;
             }
 
             Transaction transaction = new Transaction(currentUserId, selectedCategoryId, selectedAccountId, amount,
                     date, note);
             viewModel.addTransaction(transaction);
+
+            // Deduct amount from the selected account balance
+            if (selectedAccount != null) {
+                selectedAccount.balance -= amount;
+                accountViewModel.update(selectedAccount);
+            }
 
             Toast.makeText(this, "Transaction Added", Toast.LENGTH_SHORT).show();
             finish();

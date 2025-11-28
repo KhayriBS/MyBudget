@@ -10,7 +10,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import tn.esprit.mybudget.R;
 import tn.esprit.mybudget.ui.account.BooksFragment;
 import tn.esprit.mybudget.ui.transaction.WalletFragment;
-import tn.esprit.mybudget.ui.report.ChartsFragment;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -25,16 +24,13 @@ public class MainActivity extends AppCompatActivity {
             int itemId = item.getItemId();
             if (itemId == R.id.nav_books) {
                 selectedFragment = new BooksFragment();
-                setTitle("Livres");
+                setTitle("Books");
             } else if (itemId == R.id.nav_wallet) {
                 selectedFragment = new WalletFragment();
-                setTitle("Portefeuille");
-            } else if (itemId == R.id.nav_charts) {
-                selectedFragment = new ChartsFragment();
-                setTitle("Graphiques");
+                setTitle("Wallet");
             } else if (itemId == R.id.nav_more) {
                 selectedFragment = new MoreFragment();
-                setTitle("Plus");
+                setTitle("More");
             }
 
             if (selectedFragment != null) {
@@ -48,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
         // Set default selection
         if (savedInstanceState == null) {
             bottomNav.setSelectedItemId(R.id.nav_wallet);
-            setTitle("Portefeuille");
+            setTitle("Wallet");
         }
     }
 }

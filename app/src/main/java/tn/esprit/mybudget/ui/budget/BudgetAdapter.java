@@ -19,7 +19,7 @@ import tn.esprit.mybudget.data.entity.Category;
 
 public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetViewHolder> {
 
-    private List<Budget> budgets = new ArrayList<>();
+    private List<BudgetWithCategory> budgets = new ArrayList<>();
     private List<Category> categories = new ArrayList<>(); // 🔥 Liste des catégories
     private OnDeleteClickListener deleteListener;
 
@@ -56,7 +56,7 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
 
     @Override
     public void onBindViewHolder(@NonNull BudgetViewHolder holder, int position) {
-        Budget budget = budgets.get(position);
+        BudgetWithCategory budget = budgets.get(position);
 
         // 🔥 Récupération de la catégorie associée
         Category category = null;
@@ -112,7 +112,7 @@ public class BudgetAdapter extends RecyclerView.Adapter<BudgetAdapter.BudgetView
     }
 
     public interface OnDeleteClickListener {
-        void onDeleteClick(Budget budget);
+        void onDeleteClick(BudgetWithCategory budget);
     }
 
     public void setOnDeleteClickListener(OnDeleteClickListener listener) {
