@@ -1,29 +1,38 @@
 package tn.esprit.mybudget.ui.reminder;
 
+import android.Manifest;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.EditText;
+import android.widget.AutoCompleteTextView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -49,6 +58,17 @@ public class RemindersActivity extends AppCompatActivity {
     private List<Account> accountList = new ArrayList<>();
     private List<Category> categoryList = new ArrayList<>();
 
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+    private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+
+    // Notification permission launcher
+    private final ActivityResultLauncher<String> notificationPermissionLauncher = registerForActivityResult(
+            new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (!isGranted) {
+                    Toast.makeText(this, "Les notifications sont désactivées", Toast.LENGTH_LONG).show();
+                }
+            });
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,6 +79,16 @@ public class RemindersActivity extends AppCompatActivity {
         setupRecyclerView();
         setupFab();
         observeData();
+        requestNotificationPermission();
+    }
+
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
     }
 
     private void setupToolbar() {
@@ -160,10 +190,9 @@ public class RemindersActivity extends AppCompatActivity {
 
     private void showAddReminderDialog() {
         if (accountList.isEmpty()) {
-            Toast.makeText(this, "Please create an account first", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Veuillez d'abord créer un compte", Toast.LENGTH_LONG).show();
             return;
         }
-
         showReminderDialog(null);
     }
 
@@ -176,215 +205,293 @@ public class RemindersActivity extends AppCompatActivity {
 
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_reminder, null);
 
-        // Initialize views
-        EditText etTitle = dialogView.findViewById(R.id.etReminderTitle);
-        EditText etDescription = dialogView.findViewById(R.id.etReminderDescription);
-        EditText etAmount = dialogView.findViewById(R.id.etReminderAmount);
-        RadioGroup rgTransactionType = dialogView.findViewById(R.id.rgTransactionType);
-        RadioButton rbExpense = dialogView.findViewById(R.id.rbExpense);
-        RadioButton rbIncome = dialogView.findViewById(R.id.rbIncome);
-        Spinner spinnerAccount = dialogView.findViewById(R.id.spinnerAccount);
-        Spinner spinnerCategory = dialogView.findViewById(R.id.spinnerCategory);
-        Spinner spinnerFrequency = dialogView.findViewById(R.id.spinnerFrequency);
-        TextView tvSelectedDate = dialogView.findViewById(R.id.tvSelectedDate);
-        TextView tvSelectedTime = dialogView.findViewById(R.id.tvSelectedTime);
+        // Get views from new Material layout
+        TextInputEditText editTitle = dialogView.findViewById(R.id.edit_title);
+        TextInputEditText editAmount = dialogView.findViewById(R.id.edit_amount);
+        RadioGroup radioType = dialogView.findViewById(R.id.radio_type);
+        RadioButton radioExpense = dialogView.findViewById(R.id.radio_expense);
+        RadioButton radioIncome = dialogView.findViewById(R.id.radio_income);
+        AutoCompleteTextView spinnerAccount = dialogView.findViewById(R.id.spinner_account);
+        AutoCompleteTextView spinnerCategory = dialogView.findViewById(R.id.spinner_category);
+        AutoCompleteTextView spinnerFrequency = dialogView.findViewById(R.id.spinner_frequency);
+        MaterialButton btnSelectDate = dialogView.findViewById(R.id.btn_select_date);
+        MaterialButton btnSelectTime = dialogView.findViewById(R.id.btn_select_time);
+        SwitchMaterial switchReminder = dialogView.findViewById(R.id.switch_reminder);
+        AutoCompleteTextView spinnerReminderBefore = dialogView.findViewById(R.id.spinner_reminder_before);
+        TextInputLayout layoutReminderBefore = dialogView.findViewById(R.id.layout_reminder_before);
+        TextView labelReminderBefore = dialogView.findViewById(R.id.label_reminder_before);
+        MaterialButton btnCancel = dialogView.findViewById(R.id.btn_cancel);
+        MaterialButton btnSave = dialogView.findViewById(R.id.btn_save);
 
-        // Setup account spinner
-        List<String> accountNames = new ArrayList<>();
-        for (Account account : accountList) {
-            accountNames.add(account.name + " (" + account.type + ")");
+        // Calendar for date/time
+        final Calendar calendar = Calendar.getInstance();
+        if (isEdit) {
+            calendar.setTimeInMillis(existingReminder.scheduledDate);
+        }
+
+        // Setup Account dropdown
+        String[] accountNames = new String[accountList.size()];
+        for (int i = 0; i < accountList.size(); i++) {
+            accountNames[i] = accountList.get(i).name + " (" + accountList.get(i).currency + ")";
         }
         ArrayAdapter<String> accountAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, accountNames);
-        accountAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                android.R.layout.simple_dropdown_item_1line, accountNames);
         spinnerAccount.setAdapter(accountAdapter);
+        if (accountNames.length > 0) {
+            spinnerAccount.setText(accountNames[0], false);
+        }
 
-        // Setup category spinner based on transaction type
-        setupCategorySpinner(spinnerCategory, "Expense");
-        rgTransactionType.setOnCheckedChangeListener((group, checkedId) -> {
-            String type = checkedId == R.id.rbIncome ? "Income" : "Expense";
+        // Setup Frequency dropdown
+        String[] frequencies = { "Une fois", "Quotidien", "Hebdomadaire", "Mensuel", "Annuel" };
+        ArrayAdapter<String> frequencyAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_dropdown_item_1line, frequencies);
+        spinnerFrequency.setAdapter(frequencyAdapter);
+        spinnerFrequency.setText(frequencies[3], false); // Default: Monthly
+
+        // Setup Reminder Before dropdown
+        String[] reminderOptions = { "À l'heure prévue", "15 minutes avant", "30 minutes avant", "1 heure avant",
+                "1 jour avant" };
+        ArrayAdapter<String> reminderAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_dropdown_item_1line, reminderOptions);
+        spinnerReminderBefore.setAdapter(reminderAdapter);
+        spinnerReminderBefore.setText(reminderOptions[0], false);
+
+        // Load categories
+        viewModel.loadCategoriesByType("Expense");
+
+        // Observe categories
+        viewModel.getCategories().observe(this, categories -> {
+            if (categories != null && !categories.isEmpty()) {
+                categoryList.clear();
+                categoryList.addAll(categories);
+                String[] categoryNames = new String[categories.size()];
+                for (int i = 0; i < categories.size(); i++) {
+                    categoryNames[i] = categories.get(i).name;
+                }
+                ArrayAdapter<String> catAdapter = new ArrayAdapter<>(this,
+                        android.R.layout.simple_dropdown_item_1line, categoryNames);
+                spinnerCategory.setAdapter(catAdapter);
+                if (categoryNames.length > 0) {
+                    spinnerCategory.setText(categoryNames[0], false);
+                }
+            }
+        });
+
+        // Type change listener
+        radioType.setOnCheckedChangeListener((group, checkedId) -> {
+            String type = checkedId == R.id.radio_income ? "Income" : "Expense";
             viewModel.loadCategoriesByType(type);
         });
 
-        viewModel.getCategories().observe(this, categories -> {
-            if (categories != null) {
-                categoryList.clear();
-                categoryList.addAll(categories);
-                List<String> categoryNames = new ArrayList<>();
-                for (Category category : categories) {
-                    categoryNames.add(category.name);
-                }
-                ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(this,
-                        android.R.layout.simple_spinner_item, categoryNames);
-                categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                spinnerCategory.setAdapter(categoryAdapter);
-            }
+        // Toggle reminder visibility
+        switchReminder.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            int visibility = isChecked ? View.VISIBLE : View.GONE;
+            labelReminderBefore.setVisibility(visibility);
+            layoutReminderBefore.setVisibility(visibility);
         });
 
-        // Setup frequency spinner
-        String[] frequencies = { "Once", "Daily", "Weekly", "Monthly", "Yearly" };
-        ArrayAdapter<String> frequencyAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, frequencies);
-        frequencyAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerFrequency.setAdapter(frequencyAdapter);
-
-        // Setup date and time pickers
-        final Calendar calendar = Calendar.getInstance();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
-        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-
-        if (isEdit) {
-            calendar.setTimeInMillis(existingReminder.scheduledDate);
-            etTitle.setText(existingReminder.title);
-            etDescription.setText(existingReminder.description);
-            etAmount.setText(String.valueOf(existingReminder.amount));
-
-            if ("Income".equals(existingReminder.transactionType)) {
-                rbIncome.setChecked(true);
-            } else {
-                rbExpense.setChecked(true);
-            }
-
-            // Set account selection
-            for (int i = 0; i < accountList.size(); i++) {
-                if (accountList.get(i).id == existingReminder.accountId) {
-                    spinnerAccount.setSelection(i);
-                    break;
-                }
-            }
-
-            // Set frequency selection
-            String[] freqValues = { "ONCE", "DAILY", "WEEKLY", "MONTHLY", "YEARLY" };
-            for (int i = 0; i < freqValues.length; i++) {
-                if (freqValues[i].equals(existingReminder.frequency)) {
-                    spinnerFrequency.setSelection(i);
-                    break;
-                }
-            }
-        }
-
-        tvSelectedDate.setText(dateFormat.format(calendar.getTime()));
-        tvSelectedTime.setText(timeFormat.format(calendar.getTime()));
-
-        tvSelectedDate.setOnClickListener(v -> {
-            new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
+        // Date picker
+        btnSelectDate.setText(dateFormat.format(calendar.getTime()));
+        btnSelectDate.setOnClickListener(v -> {
+            DatePickerDialog dialog = new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
                 calendar.set(Calendar.YEAR, year);
                 calendar.set(Calendar.MONTH, month);
                 calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-                tvSelectedDate.setText(dateFormat.format(calendar.getTime()));
-            }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH),
-                    calendar.get(Calendar.DAY_OF_MONTH)).show();
+                btnSelectDate.setText(dateFormat.format(calendar.getTime()));
+            }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+            dialog.show();
         });
 
-        tvSelectedTime.setOnClickListener(v -> {
-            new TimePickerDialog(this, (view, hourOfDay, minute) -> {
+        // Time picker
+        btnSelectTime.setText(timeFormat.format(calendar.getTime()));
+        btnSelectTime.setOnClickListener(v -> {
+            TimePickerDialog dialog = new TimePickerDialog(this, (view, hourOfDay, minute) -> {
                 calendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
                 calendar.set(Calendar.MINUTE, minute);
                 calendar.set(Calendar.SECOND, 0);
-                tvSelectedTime.setText(timeFormat.format(calendar.getTime()));
-            }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true).show();
+                btnSelectTime.setText(timeFormat.format(calendar.getTime()));
+            }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true);
+            dialog.show();
         });
 
-        // Build dialog
+        // Populate fields if editing
+        if (isEdit) {
+            editTitle.setText(existingReminder.title);
+            editAmount.setText(String.valueOf(existingReminder.amount));
+
+            if ("Income".equals(existingReminder.transactionType)) {
+                radioIncome.setChecked(true);
+                viewModel.loadCategoriesByType("Income");
+            } else {
+                radioExpense.setChecked(true);
+                viewModel.loadCategoriesByType("Expense");
+            }
+
+            // Set account
+            for (int i = 0; i < accountList.size(); i++) {
+                if (accountList.get(i).id == existingReminder.accountId) {
+                    spinnerAccount.setText(accountNames[i], false);
+                    break;
+                }
+            }
+
+            // Set frequency
+            spinnerFrequency.setText(existingReminder.getFrequencyDisplayName(), false);
+
+            // Set notification settings
+            switchReminder.setChecked(existingReminder.notificationEnabled);
+            spinnerReminderBefore.setText(existingReminder.getReminderDisplayName(), false);
+
+            int visibility = existingReminder.notificationEnabled ? View.VISIBLE : View.GONE;
+            labelReminderBefore.setVisibility(visibility);
+            layoutReminderBefore.setVisibility(visibility);
+        }
+
+        // Create dialog
         AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle(isEdit ? "Edit Reminder" : "Add Recurring Transaction")
                 .setView(dialogView)
-                .setPositiveButton(isEdit ? "Update" : "Save", null)
-                .setNegativeButton("Cancel", null)
                 .create();
 
-        dialog.setOnShowListener(dialogInterface -> {
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-                // Validate inputs
-                String title = etTitle.getText().toString().trim();
-                String description = etDescription.getText().toString().trim();
-                String amountStr = etAmount.getText().toString().trim();
+        // Cancel button
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
 
-                if (title.isEmpty()) {
-                    etTitle.setError("Title is required");
+        // Save button
+        btnSave.setOnClickListener(v -> {
+            String title = editTitle.getText() != null ? editTitle.getText().toString().trim() : "";
+            String amountStr = editAmount.getText() != null ? editAmount.getText().toString().trim() : "";
+
+            if (title.isEmpty()) {
+                editTitle.setError("Le titre est requis");
+                return;
+            }
+
+            if (amountStr.isEmpty()) {
+                editAmount.setError("Le montant est requis");
+                return;
+            }
+
+            double amount;
+            try {
+                amount = Double.parseDouble(amountStr);
+                if (amount <= 0) {
+                    editAmount.setError("Le montant doit être positif");
                     return;
                 }
+            } catch (NumberFormatException e) {
+                editAmount.setError("Montant invalide");
+                return;
+            }
 
-                if (amountStr.isEmpty()) {
-                    etAmount.setError("Amount is required");
-                    return;
+            // Get selected account
+            int accountIndex = getDropdownIndex(spinnerAccount.getText().toString(), accountNames);
+            if (accountIndex < 0 || accountList.isEmpty()) {
+                Toast.makeText(this, "Veuillez sélectionner un compte", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Account selectedAccount = accountList.get(accountIndex);
+
+            // Get selected category
+            int categoryIndex = -1;
+            String selectedCategoryText = spinnerCategory.getText().toString();
+            for (int i = 0; i < categoryList.size(); i++) {
+                if (categoryList.get(i).name.equals(selectedCategoryText)) {
+                    categoryIndex = i;
+                    break;
                 }
+            }
+            if (categoryIndex < 0 || categoryList.isEmpty()) {
+                Toast.makeText(this, "Veuillez sélectionner une catégorie", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Category selectedCategory = categoryList.get(categoryIndex);
 
-                double amount;
-                try {
-                    amount = Double.parseDouble(amountStr);
-                    if (amount <= 0) {
-                        etAmount.setError("Amount must be positive");
-                        return;
-                    }
-                } catch (NumberFormatException e) {
-                    etAmount.setError("Invalid amount");
-                    return;
+            String transactionType = radioIncome.isChecked() ? "Income" : "Expense";
+            String frequency = getFrequencyCode(spinnerFrequency.getText().toString());
+            boolean notificationEnabled = switchReminder.isChecked();
+            int reminderMinutes = getReminderMinutes(spinnerReminderBefore.getText().toString());
+
+            // Create or update reminder
+            Reminder reminder;
+            if (isEdit) {
+                reminder = existingReminder;
+                reminder.title = title;
+                reminder.amount = amount;
+                reminder.transactionType = transactionType;
+                reminder.accountId = selectedAccount.id;
+                reminder.categoryId = selectedCategory.id;
+                reminder.scheduledDate = calendar.getTimeInMillis();
+                reminder.frequency = frequency;
+                reminder.currency = selectedAccount.currency;
+                reminder.notificationEnabled = notificationEnabled;
+                reminder.reminderMinutesBefore = reminderMinutes;
+
+                viewModel.update(reminder);
+                ReminderScheduler.cancelReminder(this, reminder.id);
+                if (reminder.isEnabled) {
+                    ReminderScheduler.scheduleReminder(this, reminder);
                 }
+                Toast.makeText(this, "Rappel modifié", Toast.LENGTH_SHORT).show();
+            } else {
+                reminder = new Reminder(title, "", amount, transactionType,
+                        selectedAccount.id, selectedCategory.id,
+                        calendar.getTimeInMillis(), frequency, true,
+                        selectedAccount.currency, notificationEnabled, reminderMinutes);
 
-                if (spinnerAccount.getSelectedItemPosition() < 0 || accountList.isEmpty()) {
-                    Toast.makeText(this, "Please select an account", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                if (spinnerCategory.getSelectedItemPosition() < 0 || categoryList.isEmpty()) {
-                    Toast.makeText(this, "Please select a category", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                // Get selected values
-                String transactionType = rgTransactionType.getCheckedRadioButtonId() == R.id.rbIncome
-                        ? "Income"
-                        : "Expense";
-                Account selectedAccount = accountList.get(spinnerAccount.getSelectedItemPosition());
-                Category selectedCategory = categoryList.get(spinnerCategory.getSelectedItemPosition());
-
-                String[] freqValues = { "ONCE", "DAILY", "WEEKLY", "MONTHLY", "YEARLY" };
-                String frequency = freqValues[spinnerFrequency.getSelectedItemPosition()];
-
-                // Create or update reminder
-                Reminder reminder;
-                if (isEdit) {
-                    reminder = existingReminder;
-                    reminder.title = title;
-                    reminder.description = description;
-                    reminder.amount = amount;
-                    reminder.transactionType = transactionType;
-                    reminder.accountId = selectedAccount.id;
-                    reminder.categoryId = selectedCategory.id;
-                    reminder.scheduledDate = calendar.getTimeInMillis();
-                    reminder.frequency = frequency;
-                    reminder.currency = selectedAccount.currency;
-
-                    viewModel.update(reminder);
-                    ReminderScheduler.cancelReminder(this, reminder.id);
-                    if (reminder.isEnabled) {
+                viewModel.insert(reminder, reminderId -> {
+                    reminder.id = reminderId;
+                    runOnUiThread(() -> {
                         ReminderScheduler.scheduleReminder(this, reminder);
-                    }
-                    Toast.makeText(this, "Reminder updated", Toast.LENGTH_SHORT).show();
-                } else {
-                    reminder = new Reminder(
-                            title, description, amount, transactionType,
-                            selectedAccount.id, selectedCategory.id,
-                            calendar.getTimeInMillis(), frequency, true, selectedAccount.currency);
-
-                    viewModel.insert(reminder, reminderId -> {
-                        reminder.id = reminderId;
-                        runOnUiThread(() -> {
-                            ReminderScheduler.scheduleReminder(this, reminder);
-                            Toast.makeText(this, "Reminder created and scheduled", Toast.LENGTH_SHORT).show();
-                        });
+                        Toast.makeText(this, "Rappel créé", Toast.LENGTH_SHORT).show();
                     });
-                }
+                });
+            }
 
-                dialog.dismiss();
-            });
+            dialog.dismiss();
         });
 
         dialog.show();
     }
 
-    private void setupCategorySpinner(Spinner spinner, String type) {
+    private int getDropdownIndex(String text, String[] items) {
+        for (int i = 0; i < items.length; i++) {
+            if (items[i].equals(text)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private String getFrequencyCode(String displayName) {
+        switch (displayName) {
+            case "Quotidien":
+                return "DAILY";
+            case "Hebdomadaire":
+                return "WEEKLY";
+            case "Mensuel":
+                return "MONTHLY";
+            case "Annuel":
+                return "YEARLY";
+            default:
+                return "ONCE";
+        }
+    }
+
+    private int getReminderMinutes(String displayName) {
+        switch (displayName) {
+            case "15 minutes avant":
+                return 15;
+            case "30 minutes avant":
+                return 30;
+            case "1 heure avant":
+                return 60;
+            case "1 jour avant":
+                return 1440;
+            default:
+                return 0;
+        }
+    }
+
+    private void setupCategoryDropdown(String type) {
         viewModel.loadCategoriesByType(type);
     }
 

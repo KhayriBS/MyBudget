@@ -35,6 +35,10 @@ public class Reminder {
     public boolean isEnabled;
     public String currency; // Currency code from the account (TND, USD, EUR, etc.)
 
+    // Notification reminder settings
+    public boolean notificationEnabled; // Whether to show notification
+    public int reminderMinutesBefore; // 0=at time, 15, 30, 60, 1440(day before)
+
     // For tracking
     public long lastExecutedAt;
     public int executionCount;
@@ -43,6 +47,8 @@ public class Reminder {
      * Default constructor for Room
      */
     public Reminder() {
+        this.notificationEnabled = true;
+        this.reminderMinutesBefore = 0;
     }
 
     /**
@@ -50,7 +56,8 @@ public class Reminder {
      */
     @Ignore
     public Reminder(String title, String description, double amount, String transactionType,
-            int accountId, int categoryId, long scheduledDate, String frequency, boolean isEnabled, String currency) {
+            int accountId, int categoryId, long scheduledDate, String frequency, boolean isEnabled,
+            String currency, boolean notificationEnabled, int reminderMinutesBefore) {
         this.title = title;
         this.description = description;
         this.amount = amount;
@@ -61,9 +68,22 @@ public class Reminder {
         this.frequency = frequency;
         this.isEnabled = isEnabled;
         this.currency = currency;
+        this.notificationEnabled = notificationEnabled;
+        this.reminderMinutesBefore = reminderMinutesBefore;
         this.createdAt = System.currentTimeMillis();
         this.lastExecutedAt = 0;
         this.executionCount = 0;
+    }
+
+    /**
+     * Constructor without notification settings (defaults enabled at scheduled
+     * time)
+     */
+    @Ignore
+    public Reminder(String title, String description, double amount, String transactionType,
+            int accountId, int categoryId, long scheduledDate, String frequency, boolean isEnabled, String currency) {
+        this(title, description, amount, transactionType, accountId, categoryId, scheduledDate,
+                frequency, isEnabled, currency, true, 0);
     }
 
     /**
@@ -109,7 +129,56 @@ public class Reminder {
             case "YEARLY":
                 calendar.add(java.util.Calendar.YEAR, 1);
                 break;
+            default:
+                break;
         }
         return calendar.getTimeInMillis();
+    }
+
+    /**
+     * Get frequency display name in French
+     */
+    public String getFrequencyDisplayName() {
+        if (frequency == null)
+            return "Une fois";
+        switch (frequency) {
+            case "DAILY":
+                return "Quotidien";
+            case "WEEKLY":
+                return "Hebdomadaire";
+            case "MONTHLY":
+                return "Mensuel";
+            case "YEARLY":
+                return "Annuel";
+            default:
+                return "Une fois";
+        }
+    }
+
+    /**
+     * Get notification time display name in French
+     */
+    public String getReminderDisplayName() {
+        switch (reminderMinutesBefore) {
+            case 0:
+                return "À l'heure prévue";
+            case 15:
+                return "15 minutes avant";
+            case 30:
+                return "30 minutes avant";
+            case 60:
+                return "1 heure avant";
+            case 1440:
+                return "1 jour avant";
+            default:
+                return reminderMinutesBefore + " minutes avant";
+        }
+    }
+
+    /**
+     * Calculate the notification time
+     */
+    public long getNotificationTime() {
+        return scheduledDate - (reminderMinutesBefore * 60 * 1000L);
     }
 }
