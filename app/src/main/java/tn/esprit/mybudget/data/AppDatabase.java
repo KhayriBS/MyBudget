@@ -34,7 +34,7 @@ import tn.esprit.mybudget.data.entity.Member;
 
 @Database(entities = { User.class, Transaction.class, Category.class, Account.class, Currency.class,
         Budget.class, SavingsGoal.class, RecurringTransaction.class,
-        Reminder.class, Member.class }, version = 7, exportSchema = false)
+        Reminder.class, Member.class }, version = 10, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     public abstract UserDao userDao();

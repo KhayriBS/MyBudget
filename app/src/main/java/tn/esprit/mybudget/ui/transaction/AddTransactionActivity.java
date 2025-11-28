@@ -1,5 +1,6 @@
 package tn.esprit.mybudget.ui.transaction;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.Toast;
@@ -13,6 +14,9 @@ import tn.esprit.mybudget.ui.account.AccountViewModel;
 import com.google.android.material.textfield.TextInputEditText;
 
 public class AddTransactionActivity extends AppCompatActivity {
+
+    private static final String PREFS_NAME = "UserPrefs";
+    private static final String KEY_USER_ID = "userId";
 
     private CategoryViewModel categoryViewModel;
     private AccountViewModel accountViewModel;
@@ -31,6 +35,10 @@ public class AddTransactionActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_transaction);
+
+        // Get the logged-in user's ID
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        currentUserId = prefs.getInt(KEY_USER_ID, 1);
 
         androidx.appcompat.widget.Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
