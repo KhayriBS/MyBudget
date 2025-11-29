@@ -4,8 +4,10 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -26,6 +28,7 @@ public class BooksFragment extends Fragment {
 
     private AccountViewModel viewModel;
     private AccountAdapter adapter;
+    private static final String[] CURRENCIES = { "TND", "USD", "EUR", "GBP", "JPY" };
 
     @Nullable
     @Override
@@ -71,10 +74,16 @@ public class BooksFragment extends Fragment {
         View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_add_account, null);
         TextInputEditText etName = view.findViewById(R.id.etAccountName);
         TextInputEditText etBalance = view.findViewById(R.id.etInitialBalance);
-        RadioGroup rgType = view.findViewById(R.id.rgAccountType);
         RadioButton rbCash = view.findViewById(R.id.rbCash);
         RadioButton rbCard = view.findViewById(R.id.rbCard);
         RadioButton rbSavings = view.findViewById(R.id.rbSavings);
+        Spinner spinnerCurrency = view.findViewById(R.id.spinnerCurrency);
+
+        // Setup currency spinner
+        ArrayAdapter<String> currencyAdapter = new ArrayAdapter<>(getContext(),
+                android.R.layout.simple_spinner_item, CURRENCIES);
+        currencyAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerCurrency.setAdapter(currencyAdapter);
 
         new AlertDialog.Builder(getContext())
                 .setTitle("Add Account")
@@ -99,7 +108,8 @@ public class BooksFragment extends Fragment {
                     else if (rbSavings.isChecked())
                         type = "SAVINGS";
 
-                    Account account = new Account(name, type, balance, "TND");
+                    String currency = spinnerCurrency.getSelectedItem().toString();
+                    Account account = new Account(name, type, balance, currency);
                     viewModel.insert(account);
                 })
                 .setNegativeButton("Cancel", null)
@@ -110,10 +120,16 @@ public class BooksFragment extends Fragment {
         View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_add_account, null);
         TextInputEditText etName = view.findViewById(R.id.etAccountName);
         TextInputEditText etBalance = view.findViewById(R.id.etInitialBalance);
-        RadioGroup rgType = view.findViewById(R.id.rgAccountType);
         RadioButton rbCash = view.findViewById(R.id.rbCash);
         RadioButton rbCard = view.findViewById(R.id.rbCard);
         RadioButton rbSavings = view.findViewById(R.id.rbSavings);
+        Spinner spinnerCurrency = view.findViewById(R.id.spinnerCurrency);
+
+        // Setup currency spinner
+        ArrayAdapter<String> currencyAdapter = new ArrayAdapter<>(getContext(),
+                android.R.layout.simple_spinner_item, CURRENCIES);
+        currencyAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerCurrency.setAdapter(currencyAdapter);
 
         // Pre-fill with existing data
         etName.setText(account.name);
@@ -125,6 +141,14 @@ public class BooksFragment extends Fragment {
             rbSavings.setChecked(true);
         } else {
             rbCash.setChecked(true);
+        }
+
+        // Set current currency
+        for (int i = 0; i < CURRENCIES.length; i++) {
+            if (CURRENCIES[i].equals(account.currency)) {
+                spinnerCurrency.setSelection(i);
+                break;
+            }
         }
 
         new AlertDialog.Builder(getContext())
@@ -153,6 +177,7 @@ public class BooksFragment extends Fragment {
                     account.name = name;
                     account.balance = balance;
                     account.type = type;
+                    account.currency = spinnerCurrency.getSelectedItem().toString();
                     viewModel.update(account);
                     Toast.makeText(getContext(), "Account updated", Toast.LENGTH_SHORT).show();
                 })

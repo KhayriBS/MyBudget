@@ -3,11 +3,12 @@ package tn.esprit.mybudget.ui.transaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import tn.esprit.mybudget.R;
-import tn.esprit.mybudget.data.entity.Transaction;
+import tn.esprit.mybudget.data.entity.TransactionWithAccount;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -16,9 +17,27 @@ import java.util.Locale;
 
 public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.TransactionViewHolder> {
 
-    private List<Transaction> transactions = new ArrayList<>();
+    private List<TransactionWithAccount> transactions = new ArrayList<>();
+    private OnTransactionClickListener clickListener;
+    private OnTransactionDeleteListener deleteListener;
 
-    public void setTransactions(List<Transaction> transactions) {
+    public interface OnTransactionClickListener {
+        void onTransactionClick(TransactionWithAccount transaction);
+    }
+
+    public interface OnTransactionDeleteListener {
+        void onTransactionDelete(TransactionWithAccount transaction);
+    }
+
+    public void setOnTransactionClickListener(OnTransactionClickListener listener) {
+        this.clickListener = listener;
+    }
+
+    public void setOnTransactionDeleteListener(OnTransactionDeleteListener listener) {
+        this.deleteListener = listener;
+    }
+
+    public void setTransactions(List<TransactionWithAccount> transactions) {
         this.transactions = transactions;
         notifyDataSetChanged();
     }
@@ -33,12 +52,52 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull TransactionViewHolder holder, int position) {
-        Transaction transaction = transactions.get(position);
-        holder.tvNote.setText(transaction.note);
-        holder.tvAmount.setText(String.format(Locale.getDefault(), "$%.2f", transaction.amount));
+        TransactionWithAccount transactionWithAccount = transactions.get(position);
+        holder.tvNote.setText(transactionWithAccount.transaction.note);
+
+        // Get currency symbol from account
+        String currencySymbol = getCurrencySymbol(transactionWithAccount.account != null
+                ? transactionWithAccount.account.currency
+                : "USD");
+        holder.tvAmount.setText(String.format(Locale.getDefault(), "%s%.2f",
+                currencySymbol, transactionWithAccount.transaction.amount));
 
         SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
-        holder.tvDate.setText(sdf.format(new Date(transaction.date)));
+        holder.tvDate.setText(sdf.format(new Date(transactionWithAccount.transaction.date)));
+
+        // Click to edit
+        holder.itemView.setOnClickListener(v -> {
+            if (clickListener != null) {
+                clickListener.onTransactionClick(transactionWithAccount);
+            }
+        });
+
+        // Delete button
+        if (holder.ivDelete != null) {
+            holder.ivDelete.setOnClickListener(v -> {
+                if (deleteListener != null) {
+                    deleteListener.onTransactionDelete(transactionWithAccount);
+                }
+            });
+        }
+    }
+
+    private String getCurrencySymbol(String currencyCode) {
+        if (currencyCode == null)
+            return "$";
+        switch (currencyCode) {
+            case "TND":
+                return "DT ";
+            case "EUR":
+                return "€";
+            case "GBP":
+                return "£";
+            case "JPY":
+                return "¥";
+            case "USD":
+            default:
+                return "$";
+        }
     }
 
     @Override
@@ -47,13 +106,17 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
     }
 
     static class TransactionViewHolder extends RecyclerView.ViewHolder {
-        TextView tvNote, tvAmount, tvDate;
+        TextView tvNote;
+        TextView tvAmount;
+        TextView tvDate;
+        ImageView ivDelete;
 
         public TransactionViewHolder(@NonNull View itemView) {
             super(itemView);
             tvNote = itemView.findViewById(R.id.tvNote);
             tvAmount = itemView.findViewById(R.id.tvAmount);
             tvDate = itemView.findViewById(R.id.tvDate);
+            ivDelete = itemView.findViewById(R.id.ivDeleteTransaction);
         }
     }
 }

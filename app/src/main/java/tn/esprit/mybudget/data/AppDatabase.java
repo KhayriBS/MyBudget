@@ -121,16 +121,16 @@ public abstract class AppDatabase extends RoomDatabase {
                     insertIfNotExists.accept(new Category("Primes", "Income", "ic_bonus", "#8BC34A"));
                     insertIfNotExists.accept(new Category("Ventes", "Income", "ic_sales", "#CDDC39"));
 
-                    // Default Currencies
+                    // Default Currencies (rates relative to USD as base = 1.0)
                     CurrencyDao currencyDao = INSTANCE.currencyDao();
                     if (currencyDao.getAllCurrenciesSync().isEmpty()) {
-                        currencyDao.insert(new Currency("TND", "DT", 1.0));
-                        currencyDao.insert(new Currency("EUR", "€", 0.92));
-                        currencyDao.insert(new Currency("GBP", "£", 0.79));
-                        currencyDao.insert(new Currency("JPY", "¥", 150.0));
-                        currencyDao.insert(new Currency("CAD", "C$", 1.35));
-                        currencyDao.insert(new Currency("AUD", "A$", 1.52));
-                        currencyDao.insert(new Currency("USD", "$", 3.1));
+                        currencyDao.insert(new Currency("USD", "$", 1.0));
+                        currencyDao.insert(new Currency("TND", "DT", 2.9444));
+                        currencyDao.insert(new Currency("EUR", "€", 0.862));
+                        currencyDao.insert(new Currency("GBP", "£", 0.755));
+                        currencyDao.insert(new Currency("JPY", "¥", 156.29));
+                        currencyDao.insert(new Currency("CAD", "C$", 1.403));
+                        currencyDao.insert(new Currency("AUD", "A$", 1.531));
                     }
                 }
             });
