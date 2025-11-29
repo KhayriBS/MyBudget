@@ -34,7 +34,7 @@ import tn.esprit.mybudget.data.entity.Member;
 
 @Database(entities = { User.class, Transaction.class, Category.class, Account.class, Currency.class,
         Budget.class, SavingsGoal.class, RecurringTransaction.class,
-        Reminder.class, Member.class }, version = 11, exportSchema = false)
+        Reminder.class, Member.class }, version = 12, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     public abstract UserDao userDao();
@@ -120,6 +120,12 @@ public abstract class AppDatabase extends RoomDatabase {
                     insertIfNotExists.accept(new Category("Salaire", "Income", "ic_salary", "#4CAF50"));
                     insertIfNotExists.accept(new Category("Primes", "Income", "ic_bonus", "#8BC34A"));
                     insertIfNotExists.accept(new Category("Ventes", "Income", "ic_sales", "#CDDC39"));
+
+                    // Lending and Borrowing Categories
+                    insertIfNotExists.accept(new Category("Lending", "Expense", "ic_lending", "#FF5722"));
+                    insertIfNotExists.accept(new Category("Borrowing", "Income", "ic_borrowing", "#4CAF50"));
+                    insertIfNotExists.accept(new Category("Repayment Received", "Income", "ic_repayment", "#8BC34A"));
+                    insertIfNotExists.accept(new Category("Debt Repaid", "Expense", "ic_debt", "#F44336"));
 
                     // Default Currencies (rates relative to USD as base = 1.0)
                     CurrencyDao currencyDao = INSTANCE.currencyDao();

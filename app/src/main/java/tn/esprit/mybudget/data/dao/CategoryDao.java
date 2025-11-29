@@ -34,4 +34,10 @@ public interface CategoryDao {
     @Query("SELECT * FROM categories WHERE id = :id")
     LiveData<Category> getCategoriesById(int id);
 
+    @Query("SELECT * FROM categories WHERE name = :name LIMIT 1")
+    Category getCategoryByName(String name);
+
+    @Query("SELECT * FROM categories WHERE type = :type LIMIT 1")
+    Category getFirstCategoryByType(String type);
+
 }
